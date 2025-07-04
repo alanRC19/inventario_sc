@@ -1,0 +1,39 @@
+/* Estilos para el componente de tabla*/
+.table-container {
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid #ececec;
+  overflow: hidden;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+.table thead tr {
+  background: #fafafa;
+  color: #18181b;
+  border-bottom: 1px solid #ececec;
+}
+.table th {
+  padding: 1rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.table td {
+  padding: 1rem;
+}
+.table tr {
+  border-bottom: 1px solid #ececec;
+  transition: background 0.2s;
+}
+.table tr:hover {
+  background: #f3f4f6;
+} 

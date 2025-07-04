@@ -1,0 +1,39 @@
+/* estilos para el componente de hamburguesa del sidebar */
+.hamburger-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  cursor: pointer;
+}
+.hamburger-bar {
+  position: absolute;
+  height: 0.25rem;
+  width: 2rem;
+  background: #18181b;
+  border-radius: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.hamburger-bar.top {
+  top: 0.5rem;
+}
+.hamburger-bar.middle {
+  top: 1rem;
+}
+.hamburger-bar.bottom {
+  top: 1.5rem;
+}
+.hamburger-btn.open .hamburger-bar.top {
+  transform: rotate(45deg) translateY(0.5rem);
+}
+.hamburger-btn.open .hamburger-bar.middle {
+  opacity: 0;
+  left: 1rem;
+}
+.hamburger-btn.open .hamburger-bar.bottom {
+  transform: rotate(-45deg) translateY(-0.5rem);
+} 

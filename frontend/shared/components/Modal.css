@@ -1,0 +1,33 @@
+/* estilos para el componente modal de agregar */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(4px);
+  transition: all 0.2s;
+}
+.modal-content {
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 2rem;
+  width: 100%;
+  max-width: 28rem;
+  position: relative;
+  transition: all 0.2s;
+  transform: scale(0.95);
+  opacity: 0;
+}
+.modal-content.open {
+  opacity: 1;
+  transform: scale(1);
+}
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+} 
