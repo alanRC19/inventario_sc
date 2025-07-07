@@ -22,7 +22,7 @@ const SIDEBAR_LINKS = [
   { href: "/proveedores", icon: "svg-proveedores", label: "Proveedores" },
   { href: "/ventas", icon: "point_of_sale", label: "Ventas" },
   { href: "/reportes", icon: "bar_chart", label: "Reportes" },
-  { href: "/alertas", icon: "warning", label: "Alertas" },
+  
   { href: "/usuarios", icon: "group", label: "Usuarios" },
 ];
 

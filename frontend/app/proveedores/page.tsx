@@ -167,7 +167,7 @@ export default function ProveedoresPage() {
               <>
                 <td className="p-4">{p.nombre}</td>
                 <td className="p-4">{p.contacto}</td>
-                <td className="p-4">{p.telefono ? `Tel: ${p.telefono}` : "-"}</td>
+                <td className="p-4">{p.telefono ? `${p.telefono}` : "-"}</td>
                 <td className="p-4 flex gap-2">
                   <button
                     className="p-1 rounded hover:bg-[#f3f4f6]"

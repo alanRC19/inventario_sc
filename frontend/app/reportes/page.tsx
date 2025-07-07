@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { ReporteDetallado, EstadisticasGenerales } from "@/domain/reportes/reporte.types"
 import { obtenerReporteGeneral } from "@/domain/reportes/reporte.service"
 import { DateRangeFilter } from "@/shared/components/DateRangeFilter"
+import jsPDF from "jspdf"
 
 export default function ReportesPage() {
   const [reporte, setReporte] = useState<ReporteDetallado | null>(null)
@@ -26,6 +27,48 @@ export default function ReportesPage() {
   useEffect(() => {
     fetchReporte()
   }, [fechaInicio, fechaFin])
+
+  // exportar a pdf
+  const exportarPDF = () => {
+    if (!reporte) return;
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("Reporte de Ventas e Inventario", 14, 18);
+    doc.setFontSize(12);
+    let y = 30;
+    doc.text(`Total Ventas: ${reporte.estadisticasGenerales.totalVentas}`, 14, y);
+    y += 8;
+    doc.text(`Ingresos Totales: $${reporte.estadisticasGenerales.totalIngresos.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 14, y);
+    y += 8;
+    doc.text(`Valor Inventario: $${reporte.estadisticasGenerales.valorInventario.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 14, y);
+    y += 8;
+    doc.text(`Artículos: ${reporte.estadisticasGenerales.totalArticulos}`, 14, y);
+    y += 8;
+    doc.text(`Stock Bajo: ${reporte.estadisticasGenerales.articulosStockBajo}`, 14, y);
+    y += 8;
+    doc.text(`Sin Stock: ${reporte.estadisticasGenerales.articulosSinStock}`, 14, y);
+    y += 12;
+    doc.setFontSize(14);
+    doc.text("Productos Más Vendidos:", 14, y);
+    y += 8;
+    doc.setFontSize(12);
+    reporte.productosMasVendidos.forEach((producto, i) => {
+      doc.text(`${i + 1}. ${producto.nombre} - ${producto.cantidadVendida} unidades - $${producto.ingresosGenerados.toFixed(2)}`, 16, y);
+      y += 7;
+      if (y > 270) { doc.addPage(); y = 20; }
+    });
+    y += 8;
+    doc.setFontSize(14);
+    doc.text("Clientes Más Frecuentes:", 14, y);
+    y += 8;
+    doc.setFontSize(12);
+    reporte.clientesMasFrecuentes.forEach((cliente, i) => {
+      doc.text(`${i + 1}. ${cliente.nombre} - ${cliente.cantidadCompras} compras - $${cliente.totalGastado.toFixed(2)}`, 16, y);
+      y += 7;
+      if (y > 270) { doc.addPage(); y = 20; }
+    });
+    doc.save("reporte.pdf");
+  };
 
   if (loading) {
     return (
@@ -60,7 +103,7 @@ export default function ReportesPage() {
         <p className="text-gray-600">Análisis detallado de ventas e inventario</p>
       </div>
 
-      {/* Filtros de fecha */}
+      {/* filtros de fecha */}
       <div className="mb-6">
         <DateRangeFilter
           fechaInicio={fechaInicio}
@@ -74,7 +117,16 @@ export default function ReportesPage() {
         />
       </div>
 
-      {/* Estadísticas Generales */}
+      <div className="mb-4 flex justify-end">
+        <button
+          onClick={exportarPDF}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow transition"
+        >
+          Exportar a PDF
+        </button>
+      </div>
+
+      {/* estadisticas generales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-xl shadow border border-[#ececec] p-6 hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between">
@@ -179,9 +231,9 @@ export default function ReportesPage() {
         </div>
       </div>
 
-      {/* Gráficos y Tablas */}
+      {/* grafcicas y Tablas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Ventas por Período */}
+        {/* ventas por periodo*/}
         <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
           <h3 className="text-lg font-semibold mb-4">Ventas Últimos 7 Días</h3>
           <div className="space-y-3">
@@ -205,7 +257,7 @@ export default function ReportesPage() {
           </div>
         </div>
 
-        {/* Productos Más Vendidos */}
+        {/* articulos mas vendidos */}
         <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
           <h3 className="text-lg font-semibold mb-4">Productos Más Vendidos</h3>
           <div className="space-y-3">
@@ -223,7 +275,7 @@ export default function ReportesPage() {
           </div>
         </div>
 
-        {/* Clientes Más Frecuentes */}
+        {/* clientes frecuentes */}
         <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
           <h3 className="text-lg font-semibold mb-4">Clientes Más Frecuentes</h3>
           <div className="space-y-3">
@@ -241,7 +293,7 @@ export default function ReportesPage() {
           </div>
         </div>
 
-        {/* Reporte Mensual */}
+        {/* reporte de ventas mensuales */}
         <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
           <h3 className="text-lg font-semibold mb-4">Reporte Mensual</h3>
           <div className="space-y-3">
@@ -260,7 +312,7 @@ export default function ReportesPage() {
         </div>
       </div>
 
-      {/* Resumen de Alertas */}
+      {/* alertas de inventario*/}
       {(estadisticasGenerales.articulosStockBajo > 0 || estadisticasGenerales.articulosSinStock > 0) && (
         <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-yellow-800 mb-4">Alertas de Inventario</h3>

@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
   // Construir filtro de búsqueda
   let filter = {}
   if (search) {
-    // Busca en nombre, categoria y proveedor (puedes agregar más campos)
+    // Busca en nombre, categoria y proveedor
     filter = {
       $or: [
         { nombre: { $regex: search, $options: 'i' } },
