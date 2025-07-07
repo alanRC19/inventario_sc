@@ -1,16 +1,12 @@
 import React from "react";
-import "./StatusBadge.css";
+import { StockStatus, getStockStatusColor, getStockStatusText } from "@/shared/utils/stockUtils";
 
 interface StatusBadgeProps {
-  estado: "disponible" | "stock bajo" | "fuera de stock";
+  estado: StockStatus;
 }
 
-const statusClass: Record<string, string> = {
-  "disponible": "disponible",
-  "stock bajo": "stock-bajo",
-  "fuera de stock": "fuera-de-stock",
-};
-
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ estado }) => (
-  <span className={`status-badge ${statusClass[estado] || ""}`}>{estado}</span>
+  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStockStatusColor(estado)}`}>
+    {getStockStatusText(estado)}
+  </span>
 ); 

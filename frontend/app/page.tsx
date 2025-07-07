@@ -10,6 +10,7 @@ type Articulo = {
 
 export default function DashboardPage() {
   const [articulos, setArticulos] = useState<Articulo[]>([])
+  const [ventasCount, setVentasCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   const fetchArticulos = async () => {
@@ -19,6 +20,17 @@ export default function DashboardPage() {
       setArticulos(data.data || data)
     } catch (error) {
       console.error("Error fetching articulos:", error)
+    }
+  }
+
+  const fetchVentasCount = async () => {
+    try {
+      const res = await fetch("http://localhost:3001/api/ventas?limit=1")
+      const data = await res.json()
+      setVentasCount(data.total || 0)
+    } catch (error) {
+      console.error("Error fetching ventas count:", error)
+      setVentasCount(0)
     } finally {
       setLoading(false)
     }
@@ -26,6 +38,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchArticulos()
+    fetchVentasCount()
   }, [])
 
   const valorInventario = articulos.reduce((acc, art) => acc + (art.stock * (art.precioUnitario || 0)), 0);
@@ -77,7 +90,9 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Ventas</p>
-              <p className="text-3xl font-bold text-black mt-2">0</p>
+              <p className="text-3xl font-bold text-black mt-2">
+                {loading ? "..." : ventasCount}
+              </p>
             </div>
             <span className="material-icons text-2xl text-black bg-transparent">point_of_sale</span>
           </div>

@@ -6,6 +6,7 @@ import { Table, TableColumn } from "@/shared/components/Table"
 import { Modal } from "@/shared/components/Modal"
 import { SearchBar } from "@/shared/components/SearchBar"
 import { StatusBadge } from "@/shared/components/StatusBadge"
+import { calculateStockStatus } from "@/shared/utils/stockUtils"
 
 export default function InventarioPage() {
   const [articulos, setArticulos] = useState<Articulo[]>([])
@@ -168,19 +169,8 @@ export default function InventarioPage() {
         columns={columns}
         data={articulos || []}
         renderRow={(a) => {
-          // Lógica para estado
-          let estado = a.estado;
-          if (!estado) {
-            if (a.stock === 0) estado = "fuera de stock";
-            else if (a.stock < 5) estado = "stock bajo";
-            else estado = "disponible";
-          }
-          let estadoColor =
-            estado === "disponible"
-              ? "bg-green-100 text-green-800"
-              : estado === "stock bajo"
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-red-100 text-red-800";
+          // Calcular estado basado en stock
+          const estado = calculateStockStatus(a.stock);
           return (
             <tr key={a._id} className="border-b border-[#ececec] hover:bg-[#f3f4f6] transition">
               {editId === a._id ? (
