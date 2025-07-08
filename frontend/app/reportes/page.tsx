@@ -133,7 +133,7 @@ export default function ReportesPage() {
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Total Ventas</p>
               <p className="text-3xl font-bold text-black mt-2">
-                {estadisticasGenerales.totalVentas}
+                {estadisticasGenerales?.totalVentas ?? 0}
               </p>
             </div>
             <span className="material-icons text-2xl text-black bg-transparent">point_of_sale</span>
@@ -150,7 +150,7 @@ export default function ReportesPage() {
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Ingresos Totales</p>
               <p className="text-3xl font-bold text-black mt-2">
-                ${estadisticasGenerales.totalIngresos.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                ${estadisticasGenerales?.totalIngresos?.toLocaleString('es-MX', { minimumFractionDigits: 2 }) ?? '0.00'}
               </p>
             </div>
             <span className="material-icons text-2xl text-black bg-transparent">attach_money</span>
@@ -167,7 +167,7 @@ export default function ReportesPage() {
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Valor Inventario</p>
               <p className="text-3xl font-bold text-black mt-2">
-                ${estadisticasGenerales.valorInventario.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                ${estadisticasGenerales?.valorInventario?.toLocaleString('es-MX', { minimumFractionDigits: 2 }) ?? '0.00'}
               </p>
             </div>
             <span className="material-icons text-2xl text-black bg-transparent">inventory_2</span>
@@ -184,7 +184,7 @@ export default function ReportesPage() {
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Artículos</p>
               <p className="text-3xl font-bold text-black mt-2">
-                {estadisticasGenerales.totalArticulos}
+                {estadisticasGenerales?.totalArticulos ?? 0}
               </p>
             </div>
             <span className="material-icons text-2xl text-black bg-transparent">category</span>
@@ -201,7 +201,7 @@ export default function ReportesPage() {
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Stock Bajo</p>
               <p className="text-3xl font-bold text-yellow-600 mt-2">
-                {estadisticasGenerales.articulosStockBajo}
+                {estadisticasGenerales?.articulosStockBajo ?? 0}
               </p>
             </div>
             <span className="material-icons text-2xl text-yellow-600 bg-transparent">warning</span>
@@ -218,7 +218,7 @@ export default function ReportesPage() {
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Sin Stock</p>
               <p className="text-3xl font-bold text-red-600 mt-2">
-                {estadisticasGenerales.articulosSinStock}
+                {estadisticasGenerales?.articulosSinStock ?? 0}
               </p>
             </div>
             <span className="material-icons text-2xl text-red-600 bg-transparent">error</span>
@@ -237,7 +237,7 @@ export default function ReportesPage() {
         <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
           <h3 className="text-lg font-semibold mb-4">Ventas Últimos 7 Días</h3>
           <div className="space-y-3">
-            {ventasPorPeriodo.map((periodo, index) => (
+            {(ventasPorPeriodo ?? []).map((periodo, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium">
@@ -261,7 +261,7 @@ export default function ReportesPage() {
         <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
           <h3 className="text-lg font-semibold mb-4">Productos Más Vendidos</h3>
           <div className="space-y-3">
-            {productosMasVendidos.map((producto, index) => (
+            {(productosMasVendidos ?? []).map((producto, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium">{producto.nombre}</p>
@@ -279,7 +279,7 @@ export default function ReportesPage() {
         <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
           <h3 className="text-lg font-semibold mb-4">Clientes Más Frecuentes</h3>
           <div className="space-y-3">
-            {clientesMasFrecuentes.map((cliente, index) => (
+            {(clientesMasFrecuentes ?? []).map((cliente, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium">{cliente.nombre}</p>
@@ -297,7 +297,7 @@ export default function ReportesPage() {
         <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
           <h3 className="text-lg font-semibold mb-4">Reporte Mensual</h3>
           <div className="space-y-3">
-            {reporteMensual.map((mes, index) => (
+            {(reporteMensual ?? []).map((mes, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium">{mes.mes}</p>
@@ -313,27 +313,27 @@ export default function ReportesPage() {
       </div>
 
       {/* alertas de inventario*/}
-      {(estadisticasGenerales.articulosStockBajo > 0 || estadisticasGenerales.articulosSinStock > 0) && (
+      {((estadisticasGenerales?.articulosStockBajo ?? 0) > 0 || (estadisticasGenerales?.articulosSinStock ?? 0) > 0) && (
         <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-yellow-800 mb-4">Alertas de Inventario</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {estadisticasGenerales.articulosStockBajo > 0 && (
+            {(estadisticasGenerales?.articulosStockBajo ?? 0) > 0 && (
               <div className="flex items-center gap-3">
                 <span className="material-icons text-yellow-600">warning</span>
                 <div>
                   <p className="font-medium text-yellow-800">
-                    {estadisticasGenerales.articulosStockBajo} productos con stock bajo
+                    {(estadisticasGenerales?.articulosStockBajo ?? 0)} productos con stock bajo
                   </p>
                   <p className="text-sm text-yellow-700">Revisar inventario</p>
                 </div>
               </div>
             )}
-            {estadisticasGenerales.articulosSinStock > 0 && (
+            {(estadisticasGenerales?.articulosSinStock ?? 0) > 0 && (
               <div className="flex items-center gap-3">
                 <span className="material-icons text-red-600">error</span>
                 <div>
                   <p className="font-medium text-red-800">
-                    {estadisticasGenerales.articulosSinStock} productos sin stock
+                    {(estadisticasGenerales?.articulosSinStock ?? 0)} productos sin stock
                   </p>
                   <p className="text-sm text-red-700">Reabastecer urgentemente</p>
                 </div>

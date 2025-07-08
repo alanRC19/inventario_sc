@@ -1,39 +1,49 @@
 /* estilos para el componente de hamburguesa del sidebar */
 .hamburger-btn {
-  background: none;
+  background: transparent;
   border: none;
-  padding: 0;
+  padding: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
   cursor: pointer;
+  border-radius: 0.5rem;
+  transition: background 0.2s;
+  outline: none;
+  box-sizing: border-box;
+}
+.hamburger-btn:hover, .hamburger-btn:focus-visible {
+  background: #f3f4f6;
 }
 .hamburger-bar {
   position: absolute;
-  height: 0.25rem;
-  width: 2rem;
+  left: 0.25rem;
+  right: 0.25rem;
+  height: 0.22rem;
+  width: calc(100% - 0.5rem);
   background: #18181b;
   border-radius: 0.5rem;
-  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.18s cubic-bezier(0.4,0,0.2,1);
+  will-change: transform, opacity;
 }
 .hamburger-bar.top {
-  top: 0.5rem;
+  top: 0.7rem;
 }
 .hamburger-bar.middle {
-  top: 1rem;
+  top: 1.14rem;
 }
 .hamburger-bar.bottom {
-  top: 1.5rem;
+  top: 1.58rem;
 }
 .hamburger-btn.open .hamburger-bar.top {
-  transform: rotate(45deg) translateY(0.5rem);
+  transform: translateY(0.44rem) rotate(45deg);
 }
 .hamburger-btn.open .hamburger-bar.middle {
   opacity: 0;
-  left: 1rem;
+  transform: scaleX(0.7);
 }
 .hamburger-btn.open .hamburger-bar.bottom {
-  transform: rotate(-45deg) translateY(-0.5rem);
+  transform: translateY(-0.44rem) rotate(-45deg);
 } 

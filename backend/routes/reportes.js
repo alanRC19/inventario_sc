@@ -49,7 +49,7 @@ router.get('/', async (req, res) => {
     // Obtener productos más vendidos
     const productosVendidos = {}
     ventas.forEach(venta => {
-      venta.productos.forEach(producto => {
+      (venta.productos ?? []).forEach(producto => {
         if (productosVendidos[producto.nombre]) {
           productosVendidos[producto.nombre].cantidadVendida += producto.cantidad
           productosVendidos[producto.nombre].ingresosGenerados += producto.subtotal
@@ -119,7 +119,7 @@ router.get('/', async (req, res) => {
       })
 
       const productosVendidosMes = ventasDelMes.reduce((sum, venta) => {
-        return sum + venta.productos.reduce((prodSum, producto) => prodSum + producto.cantidad, 0)
+        return sum + (venta.productos ?? []).reduce((prodSum, producto) => prodSum + producto.cantidad, 0)
       }, 0)
 
       reporteMensual.push({

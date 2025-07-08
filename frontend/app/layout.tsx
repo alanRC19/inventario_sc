@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { HamburgerIcon } from "@/shared/components/HamburgerIcon";
@@ -33,6 +33,14 @@ export default function RootLayout({
 }>) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebar, setMobileSidebar] = useState(false);
+
+  // Forzar resize tras la animación del sidebar
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 210); // 200ms de la animación + margen
+    return () => clearTimeout(timeout);
+  }, [sidebarOpen]);
 
   return (
     <html lang="es">
@@ -118,27 +126,27 @@ export default function RootLayout({
               <div className="flex-1 bg-black bg-opacity-30" onClick={() => setMobileSidebar(false)} />
             </div>
           )}
-          {/* Main content wrapper */}
+          {/* main content*/}
           <div className="flex-1 flex flex-col min-h-screen" style={{ marginLeft: sidebarOpen ? 240 : 64, transition: 'margin-left 0.2s' }}>
             {/* Topbar */}
             <header className="h-16 bg-white shadow-sm flex items-center px-4 md:px-8 border-b border-[#ececec] fixed w-full left-0 z-40" style={{ marginLeft: sidebarOpen ? 240 : 64, transition: 'margin-left 0.2s' }}>
-              {/* Botón menú para móvil y desktop */}
+              {/*boton menu */}
               <img
                 src="/sc_logo.png"
                 alt="Abrir menú"
-                className="w-8 h-8 rounded-full object-cover cursor-pointer mr-4 md:hidden"
+                className="w-8 h-8 rounded-full object-cover mr-4 md:hidden"
                 onClick={() => setMobileSidebar(true)}
               />
               <img
                 src="/sc_logo.png"
                 alt="Abrir/cerrar menú"
-                className="w-8 h-8 rounded-full object-cover cursor-pointer mr-4 hidden md:block"
-                onClick={() => setSidebarOpen((v) => !v)}
+                className="w-8 h-8 rounded-full object-cover mr-4 hidden md:block"
+               
               />
-              <span className="text-2xl font-bold tracking-tight text-black">Sagrado Corazón de Jesús</span>
+              <span className="text-2xl font-bold tracking-tight text-black">Parroquia del Sagrado Corazón de Jesús</span>
               <div className="flex-1" />
             </header>
-            {/* Main content */}
+            {/*main content */}
             <main className="flex-1 p-8 bg-[#fafafa] transition-all duration-200" style={{ marginTop: 64 }}>{children}</main>
           </div>
         </div>

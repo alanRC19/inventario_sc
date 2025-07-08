@@ -220,6 +220,15 @@ export default function VentasPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 text-black">Ventas</h1>
         <p className="text-gray-600">Registro y consulta de ventas</p>
+        {/* Resumen de ventas */}
+        <div className="mt-4 bg-white rounded-lg shadow p-4 flex flex-col items-start">
+          <span className="text-xl font-semibold text-black">
+            Total vendido: ${ventas.reduce((acc, v) => acc + v.total, 0).toFixed(2)}
+          </span>
+          <span className="text-sm text-gray-600 mt-1">
+            Total de ventas registradas: {ventas.length}
+          </span>
+        </div>
       </div>
 
       <div className="flex justify-between items-center mb-6">
