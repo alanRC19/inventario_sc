@@ -10,7 +10,14 @@ require('dotenv').config()
 
 const app = express()
 app.use(cors())
-app.use(express.json())
+// Middleware condicional para parsear JSON solo en POST, PUT, PATCH
+app.use((req, res, next) => {
+  if (["POST", "PUT", "PATCH"].includes(req.method)) {
+    express.json()(req, res, next)
+  } else {
+    next()
+  }
+})
 
 // Rutas
 app.use('/api/articulos', articulosRoutes)
