@@ -14,7 +14,7 @@ export default function DashboardPage() {
 
   const fetchArticulos = async () => {
     try {
-      const res = await fetch("http://localhost:3001/api/articulos?limit=10000")
+      const res = await fetch("http://localhost:4001/api/articulos?limit=10000")
       const data = await res.json()
       setArticulos(data.data || data)
     } catch (error) {
@@ -109,5 +109,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
-

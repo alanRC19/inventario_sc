@@ -2,7 +2,7 @@
 
 import { Articulo, ArticulosPaginados } from './inventario.types';
 
-const API_URL = 'http://localhost:3001/api/articulos';
+const API_URL = 'http://localhost:4001/api/articulos';
 
 export async function fetchArticulos(page = 1, limit = 6, search = ""): Promise<ArticulosPaginados> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });

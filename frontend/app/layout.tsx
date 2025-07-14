@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { HamburgerIcon } from "@/shared/components/HamburgerIcon";
+import LoginModal from "./login-modal";
+import RegisterModal from "./register-modal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,13 +35,15 @@ export default function RootLayout({
 }>) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebar, setMobileSidebar] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
   return (
     <html lang="es">
       <head>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#fafafa] text-black`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#fafafa] text-black ${loginModalOpen || registerModalOpen ? 'backdrop-blur-md' : ''}`}>
         <div className="flex">
           {/* Sidebar */}
           <aside
@@ -122,6 +126,14 @@ export default function RootLayout({
           <div className="flex-1 flex flex-col min-h-screen" style={{ marginLeft: sidebarOpen ? 240 : 64, transition: 'margin-left 0.2s' }}>
             {/* Topbar */}
             <header className="h-16 bg-white shadow-sm flex items-center px-4 md:px-8 border-b border-[#ececec] fixed w-full left-0 z-40" style={{ marginLeft: sidebarOpen ? 240 : 64, transition: 'margin-left 0.2s' }}>
+              {/* Login button in top left */}
+              <button
+                onClick={() => setLoginModalOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium mr-4 transition-colors"
+              >
+                Iniciar Sesión
+              </button>
+              
               {/* Botón menú para móvil y desktop */}
               <img
                 src="/sc_logo.png"
@@ -138,6 +150,23 @@ export default function RootLayout({
               <span className="text-2xl font-bold tracking-tight text-black">Sagrado Corazón de Jesús</span>
               <div className="flex-1" />
             </header>
+            {/* Modales de Login y Registro */}
+            <LoginModal
+              isOpen={loginModalOpen}
+              onClose={() => setLoginModalOpen(false)}
+              onRegisterClick={() => {
+                setLoginModalOpen(false);
+                setRegisterModalOpen(true);
+              }}
+            />
+            <RegisterModal
+              isOpen={registerModalOpen}
+              onClose={() => setRegisterModalOpen(false)}
+              onLoginClick={() => {
+                setRegisterModalOpen(false);
+                setLoginModalOpen(true);
+              }}
+            />
             {/* Main content */}
             <main className="flex-1 p-8 bg-[#fafafa] transition-all duration-200" style={{ marginTop: 64 }}>{children}</main>
           </div>

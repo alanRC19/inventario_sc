@@ -47,13 +47,13 @@ export default function InventarioPage() {
   }
 
   const fetchCategoriasDisponibles = async () => {
-    const res = await fetch("http://localhost:3001/api/categorias?limit=1000");
+    const res = await fetch("http://localhost:4001/api/categorias?limit=1000");
     const data = await res.json();
     setCategoriasDisponibles(data.data || data);
   }
 
   const fetchProveedoresDisponibles = async () => {
-    const res = await fetch("http://localhost:3001/api/proveedores?limit=1000");
+    const res = await fetch("http://localhost:4001/api/proveedores?limit=1000");
     const data = await res.json();
     setProveedoresDisponibles(data.data || data);
   }

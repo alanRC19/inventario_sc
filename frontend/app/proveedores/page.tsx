@@ -8,7 +8,7 @@ import { Table, TableColumn } from "@/shared/components/Table";
 import { Modal } from "@/shared/components/Modal";
 import { SearchBar } from "@/shared/components/SearchBar";
 
-const API_URL = "http://localhost:3001/api/proveedores";
+const API_URL = "http://localhost:4001/api/proveedores";
 
 export default function ProveedoresPage() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);

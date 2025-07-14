@@ -43,7 +43,7 @@ export default function CategoriasPage() {
   };
 
   const fetchArticulos = async () => {
-    const res = await fetch("http://localhost:3001/api/articulos");
+    const res = await fetch("http://localhost:/api/articulos");
     const data = await res.json();
     setArticulos(data.data || []);
   };

@@ -2,7 +2,7 @@
 
 import { Categoria, CategoriasPaginadas } from './categoria.types';
 
-const API_URL = 'http://localhost:3001/api/categorias';
+const API_URL = 'http://localhost:4001/api/categorias';
 
 export async function fetchCategorias(page = 1, limit = 6, search = ""): Promise<CategoriasPaginadas> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });

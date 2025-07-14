@@ -2,7 +2,7 @@
 
 import { Proveedor, ProveedoresPaginados } from './proveedor.types';
 
-const API_URL = 'http://localhost:3001/api/proveedores';
+const API_URL = 'http://localhost:4001/api/proveedores';
 
 export async function fetchProveedores(page = 1, limit = 6, search = ""): Promise<ProveedoresPaginados> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });

@@ -4,6 +4,8 @@ const { connectDB } = require('./db')
 const articulosRoutes = require('./routes/articulos')
 const categoriasRoutes = require('./routes/categorias')
 const proveedoresRoutes = require('./routes/proveedores')
+const loginRoutes = require('./routes/login')
+const usuariosRoutes = require('./routes/usuarios')
 require('dotenv').config()
 
 const app = express()
@@ -14,6 +16,8 @@ app.use(express.json())
 app.use('/api/articulos', articulosRoutes)
 app.use('/api/categorias', categoriasRoutes)
 app.use('/api/proveedores', proveedoresRoutes)
+app.use('/api/auth', loginRoutes)
+app.use('/api/usuarios', usuariosRoutes)
 
 connectDB().then(() => {
   app.listen(process.env.PORT, () => {
