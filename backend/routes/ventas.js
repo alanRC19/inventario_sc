@@ -1,226 +1,175 @@
-const express = require('express')
+const express = require("express")
 const router = express.Router()
-const { getDB } = require('../db')
+const { ObjectId } = require("mongodb")
+const { getDb } = require("../db")
+const { enviarTicketVenta } = require("../services/whatsappService")
 
-// Función para calcular el estado del stock
-function calculateStockStatus(stock) {
-  if (stock === 0) {
-    return 'fuera de stock'
-  } else if (stock < 5) {
-    return 'stock bajo'
-  } else {
-    return 'disponible'
-  }
-}
+// GET /api/ventas - Obtener ventas con paginación y filtros
+router.get("/", async (req, res) => {
+  try {
+    const db = getDb()
+    const { page = 1, limit = 6, search = "", fechaInicio = "", fechaFin = "" } = req.query
 
-// GET paginado y búsqueda de ventas
-router.get('/', async (req, res) => {
-  const page = parseInt(req.query.page) || 1
-  const limit = parseInt(req.query.limit) || 6
-  const skip = (page - 1) * limit
-  const search = req.query.search || ""
-  const fechaInicio = req.query.fechaInicio || ""
-  const fechaFin = req.query.fechaFin || ""
+    const skip = (Number.parseInt(page) - 1) * Number.parseInt(limit)
 
-  const collection = getDB().collection('ventas')
+    // Construir filtros
+    const filtros = {}
 
-  // Construir filtro de búsqueda
-  let filter = {}
-  
-  // Filtro de texto
-  if (search) {
-    filter.$or = [
-      { cliente: { $regex: search, $options: 'i' } },
-      { 'productos.nombre': { $regex: search, $options: 'i' } }
-    ]
-  }
-
-  // Filtro de fechas
-  if (fechaInicio || fechaFin) {
-    filter.fecha = {}
-    
-    if (fechaInicio) {
-      filter.fecha.$gte = new Date(fechaInicio + 'T00:00:00.000Z')
+    if (search) {
+      filtros.cliente = { $regex: search, $options: "i" }
     }
-    
-    if (fechaFin) {
-      filter.fecha.$lte = new Date(fechaFin + 'T23:59:59.999Z')
+
+    if (fechaInicio || fechaFin) {
+      filtros.fecha = {}
+      if (fechaInicio) filtros.fecha.$gte = new Date(fechaInicio)
+      if (fechaFin) filtros.fecha.$lte = new Date(fechaFin + "T23:59:59.999Z")
     }
+
+    const ventas = await db
+      .collection("ventas")
+      .find(filtros)
+      .sort({ fecha: -1 })
+      .skip(skip)
+      .limit(Number.parseInt(limit))
+      .toArray()
+
+    const total = await db.collection("ventas").countDocuments(filtros)
+    const totalPages = Math.ceil(total / Number.parseInt(limit))
+
+    res.json({
+      data: ventas,
+      totalPages,
+      total,
+      currentPage: Number.parseInt(page),
+    })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
   }
-
-  const total = await collection.countDocuments(filter)
-  const ventas = await collection.find(filter).skip(skip).limit(limit).sort({ fecha: -1 }).toArray()
-
-  res.json({
-    data: ventas,
-    total,
-    page,
-    totalPages: Math.ceil(total / limit)
-  })
 })
 
-// GET venta por ID
-router.get('/:id', async (req, res) => {
-  const { ObjectId } = require('mongodb')
-  const collection = getDB().collection('ventas')
-  
+// POST /api/ventas - Crear nueva venta
+router.post("/", async (req, res) => {
   try {
-    const venta = await collection.findOne({ _id: new ObjectId(req.params.id) })
-    if (!venta) {
-      return res.status(404).json({ error: 'Venta no encontrada' })
+    const db = getDb()
+    const { cliente, productos, total, metodoPago, telefono, enviarWhatsApp } = req.body
+
+    const nuevaVenta = {
+      cliente,
+      productos,
+      total,
+      metodoPago,
+      telefono: telefono || null,
+      fecha: new Date(),
     }
+
+    const resultado = await db.collection("ventas").insertOne(nuevaVenta)
+    const ventaCreada = await db.collection("ventas").findOne({ _id: resultado.insertedId })
+
+    let whatsappResult = null
+
+    // Si se solicita envío por WhatsApp
+    if (enviarWhatsApp && telefono) {
+      whatsappResult = await enviarTicketVenta(ventaCreada, telefono)
+    }
+
+    // Actualizar stock de productos
+    for (const producto of productos) {
+      await db
+        .collection("articulos")
+        .updateOne({ _id: new ObjectId(producto.articuloId) }, { $inc: { stock: -producto.cantidad } })
+    }
+
+    res.json({
+      success: true,
+      venta: ventaCreada,
+      whatsappEnviado: whatsappResult,
+    })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// GET /api/ventas/:id - Obtener venta por ID
+router.get("/:id", async (req, res) => {
+  try {
+    const db = getDb()
+    const venta = await db.collection("ventas").findOne({ _id: new ObjectId(req.params.id) })
+
+    if (!venta) {
+      return res.status(404).json({ error: "Venta no encontrada" })
+    }
+
     res.json(venta)
   } catch (error) {
-    res.status(400).json({ error: 'ID inválido' })
+    res.status(500).json({ error: error.message })
   }
 })
 
-// POST crear nueva venta
-router.post('/', async (req, res) => {
-  const { cliente, productos, total, metodoPago } = req.body
-  
-  if (!cliente || !productos || !Array.isArray(productos) || productos.length === 0) {
-    return res.status(400).json({ error: 'Cliente y productos son requeridos' })
-  }
-
-  const venta = {
-    cliente,
-    productos,
-    total: parseFloat(total),
-    metodoPago: metodoPago || 'efectivo',
-    fecha: new Date(),
-    estado: 'completada'
-  }
-
-  const collection = getDB().collection('ventas')
-  const result = await collection.insertOne(venta)
-
-  // Actualizar stock de productos
-  const articulosCollection = getDB().collection('articulos')
-  for (const producto of productos) {
-    // Obtener el artículo actual para calcular el nuevo stock
-    const articulo = await articulosCollection.findOne({ _id: new (require('mongodb').ObjectId)(producto.articuloId) })
-    if (articulo) {
-      const nuevoStock = articulo.stock - producto.cantidad
-      const nuevoEstado = calculateStockStatus(nuevoStock)
-      
-      await articulosCollection.updateOne(
-        { _id: new (require('mongodb').ObjectId)(producto.articuloId) },
-        { 
-          $inc: { stock: -producto.cantidad },
-          $set: { estado: nuevoEstado }
-        }
-      )
-    }
-  }
-
-  res.status(201).json({ ...venta, _id: result.insertedId })
-})
-
-// PUT actualizar venta
-router.put('/:id', async (req, res) => {
-  const { ObjectId } = require('mongodb')
-  const collection = getDB().collection('ventas')
-  const { cliente, productos, total, metodoPago } = req.body
-  
+// POST /api/ventas/:id/reenviar-whatsapp - Reenviar ticket por WhatsApp
+router.post("/:id/reenviar-whatsapp", async (req, res) => {
   try {
-    // Obtener la venta original
-    const ventaOriginal = await collection.findOne({ _id: new ObjectId(req.params.id) })
-    if (!ventaOriginal) {
-      return res.status(404).json({ error: 'Venta no encontrada' })
+    const db = getDb()
+    const { telefono } = req.body
+
+    if (!telefono) {
+      return res.status(400).json({
+        success: false,
+        mensaje: "Teléfono es requerido",
+      })
     }
 
-    // Restaurar stock de productos originales
-    const articulosCollection = getDB().collection('articulos')
-    for (const producto of ventaOriginal.productos) {
-      const articulo = await articulosCollection.findOne({ _id: new ObjectId(producto.articuloId) })
-      if (articulo) {
-        const nuevoStock = articulo.stock + producto.cantidad
-        const nuevoEstado = calculateStockStatus(nuevoStock)
-        
-        await articulosCollection.updateOne(
-          { _id: new ObjectId(producto.articuloId) },
-          { 
-            $inc: { stock: producto.cantidad },
-            $set: { estado: nuevoEstado }
-          }
-        )
-      }
+    const venta = await db.collection("ventas").findOne({ _id: new ObjectId(req.params.id) })
+
+    if (!venta) {
+      return res.status(404).json({
+        success: false,
+        mensaje: "Venta no encontrada",
+      })
     }
 
-    // Actualizar la venta con los nuevos datos
+    const resultado = await enviarTicketVenta(venta, telefono)
+    res.json(resultado)
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      mensaje: "Error al reenviar ticket",
+      error: error.message,
+    })
+  }
+})
+
+// PUT /api/ventas/:id - Actualizar venta
+router.put("/:id", async (req, res) => {
+  try {
+    const db = getDb()
+    const { cliente, productos, total, metodoPago, telefono } = req.body
+
     const ventaActualizada = {
       cliente,
       productos,
-      total: parseFloat(total),
-      metodoPago: metodoPago || 'efectivo',
-      fecha: ventaOriginal.fecha, // Mantener la fecha original
-      estado: 'completada'
+      total,
+      metodoPago,
+      telefono: telefono || null,
+      fechaActualizacion: new Date(),
     }
 
-    await collection.updateOne(
-      { _id: new ObjectId(req.params.id) },
-      { $set: ventaActualizada }
-    )
+    await db.collection("ventas").updateOne({ _id: new ObjectId(req.params.id) }, { $set: ventaActualizada })
 
-    // Actualizar stock con los nuevos productos
-    for (const producto of productos) {
-      const articulo = await articulosCollection.findOne({ _id: new ObjectId(producto.articuloId) })
-      if (articulo) {
-        const nuevoStock = articulo.stock - producto.cantidad
-        const nuevoEstado = calculateStockStatus(nuevoStock)
-        
-        await articulosCollection.updateOne(
-          { _id: new ObjectId(producto.articuloId) },
-          { 
-            $inc: { stock: -producto.cantidad },
-            $set: { estado: nuevoEstado }
-          }
-        )
-      }
-    }
-
-    res.json({ message: 'Venta actualizada correctamente' })
+    res.json({ success: true })
   } catch (error) {
-    res.status(400).json({ error: 'Error al actualizar la venta' })
+    res.status(500).json({ error: error.message })
   }
 })
 
-// DELETE eliminar venta
-router.delete('/:id', async (req, res) => {
-  const { ObjectId } = require('mongodb')
-  const collection = getDB().collection('ventas')
-  
+// DELETE /api/ventas/:id - Eliminar venta
+router.delete("/:id", async (req, res) => {
   try {
-    const venta = await collection.findOne({ _id: new ObjectId(req.params.id) })
-    if (!venta) {
-      return res.status(404).json({ error: 'Venta no encontrada' })
-    }
-
-    // Restaurar stock de productos
-    const articulosCollection = getDB().collection('articulos')
-    for (const producto of venta.productos) {
-      // Obtener el artículo actual para calcular el nuevo stock
-      const articulo = await articulosCollection.findOne({ _id: new ObjectId(producto.articuloId) })
-      if (articulo) {
-        const nuevoStock = articulo.stock + producto.cantidad
-        const nuevoEstado = calculateStockStatus(nuevoStock)
-        
-        await articulosCollection.updateOne(
-          { _id: new ObjectId(producto.articuloId) },
-          { 
-            $inc: { stock: producto.cantidad },
-            $set: { estado: nuevoEstado }
-          }
-        )
-      }
-    }
-
-    await collection.deleteOne({ _id: new ObjectId(req.params.id) })
-    res.json({ message: 'Venta eliminada correctamente' })
+    const db = getDb()
+    await db.collection("ventas").deleteOne({ _id: new ObjectId(req.params.id) })
+    res.json({ success: true })
   } catch (error) {
-    res.status(400).json({ error: 'ID inválido' })
+    res.status(500).json({ error: error.message })
   }
 })
 
-module.exports = router 
+module.exports = router

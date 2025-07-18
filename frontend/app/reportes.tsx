@@ -1,6 +1,7 @@
 "use client"
+
 import { useEffect, useState } from "react"
-import { ReporteDetallado, EstadisticasGenerales } from "@/domain/reportes/reporte.types"
+import type { ReporteDetallado } from "@/domain/reportes/reporte.types"
 import { obtenerReporteGeneral } from "@/domain/reportes/reporte.service"
 import { DateRangeFilter } from "@/shared/components/DateRangeFilter"
 
@@ -51,7 +52,8 @@ export default function ReportesPage() {
     )
   }
 
-  const { estadisticasGenerales, ventasPorPeriodo, productosMasVendidos, clientesMasFrecuentes, reporteMensual } = reporte
+  const { estadisticasGenerales, ventasPorPeriodo, productosMasVendidos, clientesMasFrecuentes, reporteMensual } =
+    reporte
 
   return (
     <main className="p-8 w-full">
@@ -80,16 +82,12 @@ export default function ReportesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Total Ventas</p>
-              <p className="text-3xl font-bold text-black mt-2">
-                {estadisticasGenerales.totalVentas}
-              </p>
+              <p className="text-3xl font-bold text-black mt-2">{estadisticasGenerales.totalVentas}</p>
             </div>
             <span className="material-icons text-2xl text-black bg-transparent">point_of_sale</span>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-gray-500">
-              Ventas registradas en el período
-            </p>
+            <p className="text-sm text-gray-500">Ventas registradas en el período</p>
           </div>
         </div>
 
@@ -98,15 +96,13 @@ export default function ReportesPage() {
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Ingresos Totales</p>
               <p className="text-3xl font-bold text-black mt-2">
-                ${estadisticasGenerales.totalIngresos.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                ${estadisticasGenerales.totalIngresos.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
               </p>
             </div>
             <span className="material-icons text-2xl text-black bg-transparent">attach_money</span>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-gray-500">
-              Ingresos generados en el período
-            </p>
+            <p className="text-sm text-gray-500">Ingresos generados en el período</p>
           </div>
         </div>
 
@@ -115,15 +111,13 @@ export default function ReportesPage() {
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Valor Inventario</p>
               <p className="text-3xl font-bold text-black mt-2">
-                ${estadisticasGenerales.valorInventario.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                ${estadisticasGenerales.valorInventario.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
               </p>
             </div>
             <span className="material-icons text-2xl text-black bg-transparent">inventory_2</span>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-gray-500">
-              Valor total del inventario actual
-            </p>
+            <p className="text-sm text-gray-500">Valor total del inventario actual</p>
           </div>
         </div>
 
@@ -131,16 +125,12 @@ export default function ReportesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Artículos</p>
-              <p className="text-3xl font-bold text-black mt-2">
-                {estadisticasGenerales.totalArticulos}
-              </p>
+              <p className="text-3xl font-bold text-black mt-2">{estadisticasGenerales.totalArticulos}</p>
             </div>
             <span className="material-icons text-2xl text-black bg-transparent">category</span>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-gray-500">
-              Total de productos en inventario
-            </p>
+            <p className="text-sm text-gray-500">Total de productos en inventario</p>
           </div>
         </div>
 
@@ -148,16 +138,12 @@ export default function ReportesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Stock Bajo</p>
-              <p className="text-3xl font-bold text-yellow-600 mt-2">
-                {estadisticasGenerales.articulosStockBajo}
-              </p>
+              <p className="text-3xl font-bold text-yellow-600 mt-2">{estadisticasGenerales.articulosStockBajo}</p>
             </div>
             <span className="material-icons text-2xl text-yellow-600 bg-transparent">warning</span>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-gray-500">
-              Productos con stock menor a 5 unidades
-            </p>
+            <p className="text-sm text-gray-500">Productos con stock menor a 5 unidades</p>
           </div>
         </div>
 
@@ -165,16 +151,12 @@ export default function ReportesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Sin Stock</p>
-              <p className="text-3xl font-bold text-red-600 mt-2">
-                {estadisticasGenerales.articulosSinStock}
-              </p>
+              <p className="text-3xl font-bold text-red-600 mt-2">{estadisticasGenerales.articulosSinStock}</p>
             </div>
             <span className="material-icons text-2xl text-red-600 bg-transparent">error</span>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-gray-500">
-              Productos agotados
-            </p>
+            <p className="text-sm text-gray-500">Productos agotados</p>
           </div>
         </div>
       </div>
@@ -189,17 +171,15 @@ export default function ReportesPage() {
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium">
-                    {new Date(periodo.fecha).toLocaleDateString('es-ES', { 
-                      weekday: 'short', 
-                      month: 'short', 
-                      day: 'numeric' 
+                    {new Date(periodo.fecha).toLocaleDateString("es-ES", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
                     })}
                   </p>
                   <p className="text-sm text-gray-600">{periodo.cantidad} ventas</p>
                 </div>
-                <p className="font-semibold text-green-600">
-                  ${periodo.total.toFixed(2)}
-                </p>
+                <p className="font-semibold text-green-600">${periodo.total.toFixed(2)}</p>
               </div>
             ))}
           </div>
@@ -215,9 +195,7 @@ export default function ReportesPage() {
                   <p className="font-medium">{producto.nombre}</p>
                   <p className="text-sm text-gray-600">{producto.cantidadVendida} unidades</p>
                 </div>
-                <p className="font-semibold text-green-600">
-                  ${producto.ingresosGenerados.toFixed(2)}
-                </p>
+                <p className="font-semibold text-green-600">${producto.ingresosGenerados.toFixed(2)}</p>
               </div>
             ))}
           </div>
@@ -233,9 +211,7 @@ export default function ReportesPage() {
                   <p className="font-medium">{cliente.nombre}</p>
                   <p className="text-sm text-gray-600">{cliente.cantidadCompras} compras</p>
                 </div>
-                <p className="font-semibold text-blue-600">
-                  ${cliente.totalGastado.toFixed(2)}
-                </p>
+                <p className="font-semibold text-blue-600">${cliente.totalGastado.toFixed(2)}</p>
               </div>
             ))}
           </div>
@@ -249,47 +225,125 @@ export default function ReportesPage() {
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium">{mes.mes}</p>
-                  <p className="text-sm text-gray-600">{mes.ventas} ventas, {mes.productosVendidos} productos</p>
+                  <p className="text-sm text-gray-600">
+                    {mes.ventas} ventas, {mes.productosVendidos} productos
+                  </p>
                 </div>
-                <p className="font-semibold text-green-600">
-                  ${mes.ingresos.toFixed(2)}
-                </p>
+                <p className="font-semibold text-green-600">${mes.ingresos.toFixed(2)}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Resumen de Alertas */}
+      {/* Alertas de Inventario Detalladas */}
       {(estadisticasGenerales.articulosStockBajo > 0 || estadisticasGenerales.articulosSinStock > 0) && (
-        <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-yellow-800 mb-4">Alertas de Inventario</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {estadisticasGenerales.articulosStockBajo > 0 && (
-              <div className="flex items-center gap-3">
-                <span className="material-icons text-yellow-600">warning</span>
-                <div>
-                  <p className="font-medium text-yellow-800">
-                    {estadisticasGenerales.articulosStockBajo} productos con stock bajo
-                  </p>
-                  <p className="text-sm text-yellow-700">Revisar inventario</p>
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-6 text-black">Alertas de Inventario</h2>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Productos con Stock Bajo */}
+            {estadisticasGenerales.articulosStockBajoDetalle &&
+              estadisticasGenerales.articulosStockBajoDetalle.length > 0 && (
+                <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="material-icons text-yellow-600">warning</span>
+                    <h3 className="text-lg font-semibold text-yellow-800">
+                      Productos con Stock Bajo ({estadisticasGenerales.articulosStockBajo})
+                    </h3>
+                  </div>
+                  <div className="space-y-3 max-h-80 overflow-y-auto">
+                    {estadisticasGenerales.articulosStockBajoDetalle.map((producto, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200"
+                      >
+                        <div>
+                          <p className="font-medium text-yellow-900">{producto.nombre}</p>
+                          <p className="text-sm text-yellow-700">
+                            {producto.categoria} • Stock actual: {producto.stock} unidades
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-yellow-800">{producto.stock}</p>
+                          <p className="text-xs text-yellow-600">unidades</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-            {estadisticasGenerales.articulosSinStock > 0 && (
-              <div className="flex items-center gap-3">
-                <span className="material-icons text-red-600">error</span>
-                <div>
-                  <p className="font-medium text-red-800">
-                    {estadisticasGenerales.articulosSinStock} productos sin stock
-                  </p>
-                  <p className="text-sm text-red-700">Reabastecer urgentemente</p>
+              )}
+
+            {/* Productos Sin Stock */}
+            {estadisticasGenerales.articulosSinStockDetalle &&
+              estadisticasGenerales.articulosSinStockDetalle.length > 0 && (
+                <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="material-icons text-red-600">error</span>
+                    <h3 className="text-lg font-semibold text-red-800">
+                      Productos Agotados ({estadisticasGenerales.articulosSinStock})
+                    </h3>
+                  </div>
+                  <div className="space-y-3 max-h-80 overflow-y-auto">
+                    {estadisticasGenerales.articulosSinStockDetalle.map((producto, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200"
+                      >
+                        <div>
+                          <p className="font-medium text-red-900">{producto.nombre}</p>
+                          <p className="text-sm text-red-700">
+                            {producto.categoria} • Agotado el{" "}
+                            {new Date(producto.fechaAgotamiento).toLocaleDateString("es-ES", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-red-800">$0.00</p>
+                          <p className="text-xs text-red-600">agotado</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
+
+          {/* Resumen de alertas (versión compacta para cuando no hay detalles) */}
+          {!estadisticasGenerales.articulosStockBajoDetalle && !estadisticasGenerales.articulosSinStockDetalle && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-yellow-800 mb-4">Resumen de Alertas</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {estadisticasGenerales.articulosStockBajo > 0 && (
+                  <div className="flex items-center gap-3">
+                    <span className="material-icons text-yellow-600">warning</span>
+                    <div>
+                      <p className="font-medium text-yellow-800">
+                        {estadisticasGenerales.articulosStockBajo} productos con stock bajo
+                      </p>
+                      <p className="text-sm text-yellow-700">Revisar inventario</p>
+                    </div>
+                  </div>
+                )}
+                {estadisticasGenerales.articulosSinStock > 0 && (
+                  <div className="flex items-center gap-3">
+                    <span className="material-icons text-red-600">error</span>
+                    <div>
+                      <p className="font-medium text-red-800">
+                        {estadisticasGenerales.articulosSinStock} productos sin stock
+                      </p>
+                      <p className="text-sm text-red-700">Reabastecer urgentemente</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </main>
   )
-} 
+}

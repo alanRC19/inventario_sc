@@ -1,21 +1,24 @@
 {
-  "name": "inventariosc-backend",
+  "name": "inventario-backend",
   "version": "1.0.0",
+  "description": "Backend para sistema de inventario con WhatsApp",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "update-stock-status": "node updateStockStatus.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "auth-whatsapp": "node whatsapp-auth.js",
+    "check-whatsapp": "node check-whatsapp.js",
+    "test-db": "node -e \"require('./db').connectToDatabase().then(() => console.log('DB OK')).catch(console.error)\""
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
+    "express": "^4.18.2",
     "cors": "^2.8.5",
-    "dotenv": "^17.0.0",
-    "express": "^5.1.0",
-    "mongodb": "^6.17.0"
+    "mongodb": "^6.0.0",
+    "whatsapp-web.js": "^1.23.0",
+    "qrcode-terminal": "^0.12.0",
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }

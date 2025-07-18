@@ -1,8 +1,14 @@
 "use client"
+
 import { useEffect, useState, useRef } from "react"
-import { Venta, VentasPaginadas, ProductoVenta } from "@/domain/ventas/venta.types"
-import { fetchVentas, agregarVenta as agregarVentaService, eliminarVenta as eliminarVentaService, editarVenta as editarVentaService } from "@/domain/ventas/venta.service"
-import { Table, TableColumn } from "@/shared/components/Table"
+import type { Venta, VentasPaginadas, ProductoVenta } from "@/domain/ventas/venta.types"
+import {
+  fetchVentas,
+  agregarVenta as agregarVentaService,
+  eliminarVenta as eliminarVentaService,
+  editarVenta as editarVentaService,
+} from "@/domain/ventas/venta.service"
+import { Table, type TableColumn } from "@/shared/components/Table"
 import { Modal } from "@/shared/components/Modal"
 import { SearchBar } from "@/shared/components/SearchBar"
 import { DateRangeFilter } from "@/shared/components/DateRangeFilter"
@@ -17,8 +23,10 @@ type Articulo = {
 export default function VentasPage() {
   const [ventas, setVentas] = useState<Venta[]>([])
   const [cliente, setCliente] = useState("")
+  const [telefono, setTelefono] = useState("")
+  const [enviarWhatsApp, setEnviarWhatsApp] = useState(false)
   const [productosSeleccionados, setProductosSeleccionados] = useState<ProductoVenta[]>([])
-  const [metodoPago, setMetodoPago] = useState<'efectivo' | 'tarjeta' | 'transferencia'>('efectivo')
+  const [metodoPago, setMetodoPago] = useState<"efectivo" | "tarjeta" | "transferencia">("efectivo")
   const [showModal, setShowModal] = useState(false)
   const [modalMounted, setModalMounted] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
@@ -32,13 +40,20 @@ export default function VentasPage() {
   const [articuloSeleccionado, setArticuloSeleccionado] = useState("")
   const [cantidad, setCantidad] = useState("")
   const modalRef = useRef<HTMLDivElement>(null)
-  
+
   // Estados para edición
   const [editId, setEditId] = useState<string | null>(null)
   const [editCliente, setEditCliente] = useState("")
+  const [editTelefono, setEditTelefono] = useState("")
   const [editProductosSeleccionados, setEditProductosSeleccionados] = useState<ProductoVenta[]>([])
-  const [editMetodoPago, setEditMetodoPago] = useState<'efectivo' | 'tarjeta' | 'transferencia'>('efectivo')
+  const [editMetodoPago, setEditMetodoPago] = useState<"efectivo" | "tarjeta" | "transferencia">("efectivo")
   const [showEditModal, setShowEditModal] = useState(false)
+
+  // Estado para reenvío de WhatsApp
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false)
+  const [whatsappVentaId, setWhatsappVentaId] = useState<string | null>(null)
+  const [whatsappTelefono, setWhatsappTelefono] = useState("")
+  const [enviandoWhatsApp, setEnviandoWhatsApp] = useState(false)
 
   const fetchVentasData = async (pageToFetch = page, search = searchTerm, inicio = fechaInicio, fin = fechaFin) => {
     setLoading(true)
@@ -69,12 +84,12 @@ export default function VentasPage() {
   }
 
   const agregarProducto = () => {
-    if (!articuloSeleccionado || !cantidad || parseInt(cantidad) <= 0) return
+    if (!articuloSeleccionado || !cantidad || Number.parseInt(cantidad) <= 0) return
 
-    const articulo = articulosDisponibles.find(a => a._id === articuloSeleccionado)
+    const articulo = articulosDisponibles.find((a) => a._id === articuloSeleccionado)
     if (!articulo) return
 
-    const cantidadNum = parseInt(cantidad)
+    const cantidadNum = Number.parseInt(cantidad)
     if (cantidadNum > articulo.stock) {
       alert("No hay suficiente stock disponible")
       return
@@ -85,7 +100,7 @@ export default function VentasPage() {
       nombre: articulo.nombre,
       cantidad: cantidadNum,
       precioUnitario: articulo.precioUnitario || 0,
-      subtotal: (articulo.precioUnitario || 0) * cantidadNum
+      subtotal: (articulo.precioUnitario || 0) * cantidadNum,
     }
 
     setProductosSeleccionados([...productosSeleccionados, nuevoProducto])
@@ -107,17 +122,35 @@ export default function VentasPage() {
       return
     }
 
+    if (enviarWhatsApp && !telefono) {
+      alert("Por favor ingresa un número de teléfono para enviar el ticket por WhatsApp")
+      return
+    }
+
     const total = calcularTotal()
-    await agregarVentaService({
+    const resultado = await agregarVentaService({
       cliente,
       productos: productosSeleccionados,
       total,
-      metodoPago
+      metodoPago,
+      telefono,
+      enviarWhatsApp,
     })
 
+    // Mostrar resultado del envío de WhatsApp
+    if (enviarWhatsApp && resultado.whatsappEnviado) {
+      if (resultado.whatsappEnviado.success) {
+        alert("✅ Venta creada y ticket enviado por WhatsApp exitosamente")
+      } else {
+        alert(`⚠️ Venta creada pero error al enviar WhatsApp: ${resultado.whatsappEnviado.mensaje}`)
+      }
+    }
+
     setCliente("")
+    setTelefono("")
+    setEnviarWhatsApp(false)
     setProductosSeleccionados([])
-    setMetodoPago('efectivo')
+    setMetodoPago("efectivo")
     setShowModal(false)
     fetchVentasData()
   }
@@ -131,6 +164,7 @@ export default function VentasPage() {
   const iniciarEdicion = (venta: Venta) => {
     setEditId(venta._id)
     setEditCliente(venta.cliente)
+    setEditTelefono(venta.telefono || "")
     setEditProductosSeleccionados([...venta.productos])
     setEditMetodoPago(venta.metodoPago)
     setShowEditModal(true)
@@ -141,12 +175,12 @@ export default function VentasPage() {
   }
 
   const agregarProductoEdit = () => {
-    if (!articuloSeleccionado || !cantidad || parseInt(cantidad) <= 0) return
+    if (!articuloSeleccionado || !cantidad || Number.parseInt(cantidad) <= 0) return
 
-    const articulo = articulosDisponibles.find(a => a._id === articuloSeleccionado)
+    const articulo = articulosDisponibles.find((a) => a._id === articuloSeleccionado)
     if (!articulo) return
 
-    const cantidadNum = parseInt(cantidad)
+    const cantidadNum = Number.parseInt(cantidad)
     if (cantidadNum > articulo.stock) {
       alert("No hay suficiente stock disponible")
       return
@@ -157,7 +191,7 @@ export default function VentasPage() {
       nombre: articulo.nombre,
       cantidad: cantidadNum,
       precioUnitario: articulo.precioUnitario || 0,
-      subtotal: (articulo.precioUnitario || 0) * cantidadNum
+      subtotal: (articulo.precioUnitario || 0) * cantidadNum,
     }
 
     setEditProductosSeleccionados([...editProductosSeleccionados, nuevoProducto])
@@ -180,15 +214,54 @@ export default function VentasPage() {
       cliente: editCliente,
       productos: editProductosSeleccionados,
       total,
-      metodoPago: editMetodoPago
+      metodoPago: editMetodoPago,
+      telefono: editTelefono,
     })
 
     setEditId(null)
     setEditCliente("")
+    setEditTelefono("")
     setEditProductosSeleccionados([])
-    setEditMetodoPago('efectivo')
+    setEditMetodoPago("efectivo")
     setShowEditModal(false)
     fetchVentasData()
+  }
+
+  const abrirModalWhatsApp = (ventaId: string, telefonoExistente?: string) => {
+    setWhatsappVentaId(ventaId)
+    setWhatsappTelefono(telefonoExistente || "")
+    setShowWhatsAppModal(true)
+  }
+
+  const reenviarWhatsApp = async () => {
+    if (!whatsappTelefono) {
+      alert("Por favor ingresa un número de teléfono")
+      return
+    }
+
+    setEnviandoWhatsApp(true)
+    try {
+      const response = await fetch(`http://localhost:3001/api/ventas/${whatsappVentaId}/reenviar-whatsapp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telefono: whatsappTelefono }),
+      })
+
+      const resultado = await response.json()
+
+      if (resultado.success) {
+        alert("✅ Ticket enviado por WhatsApp exitosamente")
+      } else {
+        alert(`❌ Error al enviar WhatsApp: ${resultado.mensaje}`)
+      }
+    } catch (error) {
+      alert("❌ Error al enviar ticket por WhatsApp")
+    }
+
+    setEnviandoWhatsApp(false)
+    setShowWhatsAppModal(false)
+    setWhatsappVentaId(null)
+    setWhatsappTelefono("")
   }
 
   // Animación de entrada del modal
@@ -209,6 +282,7 @@ export default function VentasPage() {
   const columns: TableColumn[] = [
     { key: "fecha", label: "Fecha" },
     { key: "cliente", label: "Cliente" },
+    { key: "telefono", label: "Teléfono" },
     { key: "productos", label: "Productos" },
     { key: "total", label: "Total" },
     { key: "metodoPago", label: "Método de Pago" },
@@ -225,9 +299,7 @@ export default function VentasPage() {
           <span className="text-xl font-semibold text-black">
             Total vendido: ${ventas.reduce((acc, v) => acc + v.total, 0).toFixed(2)}
           </span>
-          <span className="text-sm text-gray-600 mt-1">
-            Total de ventas registradas: {ventas.length}
-          </span>
+          <span className="text-sm text-gray-600 mt-1">Total de ventas registradas: {ventas.length}</span>
         </div>
       </div>
 
@@ -265,20 +337,12 @@ export default function VentasPage() {
           <div className="flex items-center gap-2 text-sm text-blue-800">
             <span className="material-icons text-base">filter_list</span>
             <span className="font-medium">Filtros activos:</span>
-            {searchTerm && (
-              <span className="bg-blue-100 px-2 py-1 rounded">
-                Búsqueda: "{searchTerm}"
-              </span>
-            )}
+            {searchTerm && <span className="bg-blue-100 px-2 py-1 rounded">Búsqueda: "{searchTerm}"</span>}
             {fechaInicio && (
-              <span className="bg-blue-100 px-2 py-1 rounded">
-                Desde: {new Date(fechaInicio).toLocaleDateString()}
-              </span>
+              <span className="bg-blue-100 px-2 py-1 rounded">Desde: {new Date(fechaInicio).toLocaleDateString()}</span>
             )}
             {fechaFin && (
-              <span className="bg-blue-100 px-2 py-1 rounded">
-                Hasta: {new Date(fechaFin).toLocaleDateString()}
-              </span>
+              <span className="bg-blue-100 px-2 py-1 rounded">Hasta: {new Date(fechaFin).toLocaleDateString()}</span>
             )}
             <button
               onClick={() => {
@@ -300,15 +364,22 @@ export default function VentasPage() {
         renderRow={(venta) => (
           <tr key={venta._id} className="border-b border-[#ececec] hover:bg-[#f3f4f6] transition">
             <td className="p-4">
-              {new Date(venta.fecha).toLocaleDateString('es-ES', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
+              {new Date(venta.fecha).toLocaleDateString("es-ES", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
               })}
             </td>
             <td className="p-4">{venta.cliente}</td>
+            <td className="p-4">
+              {venta.telefono ? (
+                <span className="text-green-600">{venta.telefono}</span>
+              ) : (
+                <span className="text-gray-400">Sin teléfono</span>
+              )}
+            </td>
             <td className="p-4">
               <div className="max-w-xs">
                 {venta.productos.map((producto, index) => (
@@ -318,28 +389,29 @@ export default function VentasPage() {
                 ))}
               </div>
             </td>
-            <td className="p-4 font-semibold">
-              ${venta.total.toFixed(2)}
-            </td>
+            <td className="p-4 font-semibold">${venta.total.toFixed(2)}</td>
             <td className="p-4">
               <span className="capitalize">{venta.metodoPago}</span>
             </td>
-                              <td className="p-4 flex gap-2">
-                    <button
-                      className="p-1 rounded hover:bg-[#f3f4f6]"
-                      title="Editar"
-                      onClick={() => iniciarEdicion(venta)}
-                    >
-                      <span className="material-icons text-base">edit</span>
-                    </button>
-                    <button
-                      className="p-1 rounded hover:bg-[#f3f4f6] text-red-600"
-                      title="Eliminar"
-                      onClick={() => eliminarVenta(venta._id)}
-                    >
-                      <span className="material-icons text-base">delete</span>
-                    </button>
-                  </td>
+            <td className="p-4 flex gap-2">
+              <button
+                className="p-1 rounded hover:bg-[#f3f4f6] text-green-600"
+                title="Enviar por WhatsApp"
+                onClick={() => abrirModalWhatsApp(venta._id, venta.telefono)}
+              >
+                <span className="material-icons text-base">sms</span>
+              </button>
+              <button className="p-1 rounded hover:bg-[#f3f4f6]" title="Editar" onClick={() => iniciarEdicion(venta)}>
+                <span className="material-icons text-base">edit</span>
+              </button>
+              <button
+                className="p-1 rounded hover:bg-[#f3f4f6] text-red-600"
+                title="Eliminar"
+                onClick={() => eliminarVenta(venta._id)}
+              >
+                <span className="material-icons text-base">delete</span>
+              </button>
+            </td>
           </tr>
         )}
       />
@@ -347,16 +419,18 @@ export default function VentasPage() {
       {/* controles de paginacion */}
       <div className="flex justify-end items-center gap-4 mt-4 w-full">
         <button
-          onClick={() => setPage(p => Math.max(1, p - 1))}
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={page === 1}
           className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 flex items-center"
         >
           <span className="material-icons">chevron_left</span>
           Anterior
         </button>
-        <span>Página {page} de {totalPages}</span>
+        <span>
+          Página {page} de {totalPages}
+        </span>
         <button
-          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           disabled={page === totalPages}
           className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 flex items-center"
         >
@@ -375,9 +449,33 @@ export default function VentasPage() {
               className="border border-[#ececec] p-2 rounded-lg w-full text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Nombre del cliente"
               value={cliente}
-              onChange={e => setCliente(e.target.value)}
+              onChange={(e) => setCliente(e.target.value)}
               autoFocus
             />
+          </div>
+
+          {/* Teléfono y WhatsApp */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+              <input
+                className="border border-[#ececec] p-2 rounded-lg w-full text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
+                placeholder="Número de teléfono"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+              />
+            </div>
+            <div className="flex items-end">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={enviarWhatsApp}
+                  onChange={(e) => setEnviarWhatsApp(e.target.checked)}
+                  className="rounded"
+                />
+                <span className="text-sm text-gray-700">📱 Enviar ticket por WhatsApp</span>
+              </label>
+            </div>
           </div>
 
           {/* seleccion de productos */}
@@ -387,10 +485,10 @@ export default function VentasPage() {
               <select
                 className="border border-[#ececec] p-2 rounded-lg flex-1 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
                 value={articuloSeleccionado}
-                onChange={e => setArticuloSeleccionado(e.target.value)}
+                onChange={(e) => setArticuloSeleccionado(e.target.value)}
               >
                 <option value="">Selecciona un producto</option>
-                {articulosDisponibles.map(art => (
+                {articulosDisponibles.map((art) => (
                   <option key={art._id} value={art._id}>
                     {art.nombre} - Stock: {art.stock} - ${art.precioUnitario?.toFixed(2)}
                   </option>
@@ -402,7 +500,7 @@ export default function VentasPage() {
                 type="number"
                 min="1"
                 value={cantidad}
-                onChange={e => setCantidad(e.target.value)}
+                onChange={(e) => setCantidad(e.target.value)}
               />
               <button
                 onClick={agregarProducto}
@@ -424,10 +522,7 @@ export default function VentasPage() {
                     <span className="text-sm">
                       {producto.cantidad}x {producto.nombre} - ${producto.subtotal.toFixed(2)}
                     </span>
-                    <button
-                      onClick={() => removerProducto(index)}
-                      className="text-red-600 hover:text-red-800"
-                    >
+                    <button onClick={() => removerProducto(index)} className="text-red-600 hover:text-red-800">
                       <span className="material-icons text-sm">remove</span>
                     </button>
                   </div>
@@ -442,7 +537,7 @@ export default function VentasPage() {
             <select
               className="border border-[#ececec] p-2 rounded-lg w-full text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
               value={metodoPago}
-              onChange={e => setMetodoPago(e.target.value as any)}
+              onChange={(e) => setMetodoPago(e.target.value as any)}
             >
               <option value="efectivo">Efectivo</option>
               <option value="tarjeta">Tarjeta</option>
@@ -469,11 +564,58 @@ export default function VentasPage() {
               Cancelar
             </button>
             <button
-              className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition"
+              className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition flex items-center gap-2"
               onClick={crearVenta}
               disabled={!cliente || productosSeleccionados.length === 0}
             >
+              {enviarWhatsApp && <span className="material-icons text-sm">whatsapp</span>}
               Crear Venta
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de reenvío por WhatsApp */}
+      <Modal open={showWhatsAppModal} onClose={() => setShowWhatsAppModal(false)} title="Enviar Ticket por WhatsApp">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Número de Teléfono</label>
+            <input
+              className="border border-[#ececec] p-2 rounded-lg w-full text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
+              placeholder="Ej: +5215512345678 o 5512345678"
+              value={whatsappTelefono}
+              onChange={(e) => setWhatsappTelefono(e.target.value)}
+              autoFocus
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Incluye el código de país si es necesario (ej: +52 para México)
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <button
+              className="bg-gray-200 text-black px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+              onClick={() => setShowWhatsAppModal(false)}
+              disabled={enviandoWhatsApp}
+            >
+              Cancelar
+            </button>
+            <button
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+              onClick={reenviarWhatsApp}
+              disabled={!whatsappTelefono || enviandoWhatsApp}
+            >
+              {enviandoWhatsApp ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <span className="material-icons text-sm">whatsapp</span>
+                  Enviar Ticket
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -489,8 +631,19 @@ export default function VentasPage() {
               className="border border-[#ececec] p-2 rounded-lg w-full text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Nombre del cliente"
               value={editCliente}
-              onChange={e => setEditCliente(e.target.value)}
+              onChange={(e) => setEditCliente(e.target.value)}
               autoFocus
+            />
+          </div>
+
+          {/* Teléfono */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+            <input
+              className="border border-[#ececec] p-2 rounded-lg w-full text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
+              placeholder="Número de teléfono"
+              value={editTelefono}
+              onChange={(e) => setEditTelefono(e.target.value)}
             />
           </div>
 
@@ -501,10 +654,10 @@ export default function VentasPage() {
               <select
                 className="border border-[#ececec] p-2 rounded-lg flex-1 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
                 value={articuloSeleccionado}
-                onChange={e => setArticuloSeleccionado(e.target.value)}
+                onChange={(e) => setArticuloSeleccionado(e.target.value)}
               >
                 <option value="">Selecciona un producto</option>
-                {articulosDisponibles.map(art => (
+                {articulosDisponibles.map((art) => (
                   <option key={art._id} value={art._id}>
                     {art.nombre} - Stock: {art.stock} - ${art.precioUnitario?.toFixed(2)}
                   </option>
@@ -516,7 +669,7 @@ export default function VentasPage() {
                 type="number"
                 min="1"
                 value={cantidad}
-                onChange={e => setCantidad(e.target.value)}
+                onChange={(e) => setCantidad(e.target.value)}
               />
               <button
                 onClick={agregarProductoEdit}
@@ -538,10 +691,7 @@ export default function VentasPage() {
                     <span className="text-sm">
                       {producto.cantidad}x {producto.nombre} - ${producto.subtotal.toFixed(2)}
                     </span>
-                    <button
-                      onClick={() => removerProductoEdit(index)}
-                      className="text-red-600 hover:text-red-800"
-                    >
+                    <button onClick={() => removerProductoEdit(index)} className="text-red-600 hover:text-red-800">
                       <span className="material-icons text-sm">remove</span>
                     </button>
                   </div>
@@ -556,7 +706,7 @@ export default function VentasPage() {
             <select
               className="border border-[#ececec] p-2 rounded-lg w-full text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
               value={editMetodoPago}
-              onChange={e => setEditMetodoPago(e.target.value as any)}
+              onChange={(e) => setEditMetodoPago(e.target.value as any)}
             >
               <option value="efectivo">Efectivo</option>
               <option value="tarjeta">Tarjeta</option>
@@ -594,4 +744,4 @@ export default function VentasPage() {
       </Modal>
     </main>
   )
-} 
+}

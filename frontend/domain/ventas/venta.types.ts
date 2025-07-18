@@ -1,33 +1,33 @@
-// Tipos e interfaces del dominio Ventas
-
 export interface ProductoVenta {
-  articuloId: string;
-  nombre: string;
-  cantidad: number;
-  precioUnitario: number;
-  subtotal: number;
+  articuloId: string
+  nombre: string
+  cantidad: number
+  precioUnitario: number
+  subtotal: number
 }
 
 export interface Venta {
-  _id: string;
-  cliente: string;
-  productos: ProductoVenta[];
-  total: number;
-  metodoPago: 'efectivo' | 'tarjeta' | 'transferencia';
-  fecha: string;
-  estado: 'completada' | 'cancelada';
-}
-
-export interface VentasPaginadas {
-  data: Venta[];
-  total: number;
-  page: number;
-  totalPages: number;
+  _id: string
+  cliente: string
+  telefono?: string
+  productos: ProductoVenta[]
+  total: number
+  metodoPago: "efectivo" | "tarjeta" | "transferencia"
+  fecha: string
 }
 
 export interface NuevaVenta {
-  cliente: string;
-  productos: ProductoVenta[];
-  total: number;
-  metodoPago: 'efectivo' | 'tarjeta' | 'transferencia';
-} 
+  cliente: string
+  telefono?: string
+  productos: ProductoVenta[]
+  total: number
+  metodoPago: "efectivo" | "tarjeta" | "transferencia"
+  enviarWhatsApp?: boolean
+}
+
+export interface VentasPaginadas {
+  data: Venta[]
+  totalPages: number
+  total: number
+  currentPage: number
+}
