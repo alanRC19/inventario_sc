@@ -1,6 +1,22 @@
 const express = require('express')
 const router = express.Router()
 const { getDB } = require('../db')
+const requireAuth = require('./usuarios').requireAuth;
+
+// Helper para registrar movimiento
+async function registrarMovimiento({ db, articuloId, tipo, cantidad, stockAntes, stockDespues, usuarioId, usuarioNombre, motivo }) {
+  await db.collection('movimientos_inventario').insertOne({
+    articuloId,
+    tipo,
+    cantidad,
+    stockAntes,
+    stockDespues,
+    usuarioId,
+    usuarioNombre,
+    motivo,
+    fecha: new Date()
+  });
+}
 
 // GET paginado y búsqueda global de articulos
 router.get('/', async (req, res) => {
@@ -36,33 +52,86 @@ router.get('/', async (req, res) => {
 })
 
 // POST nuevo articulo
-router.post('/', async (req, res) => {
-  const articulo = req.body
-  const result = await getDB().collection('articulos').insertOne(articulo)
-  res.json({ insertedId: result.insertedId })
+router.post('/', requireAuth, async (req, res) => {
+  const articulo = req.body;
+  const db = getDB();
+  const result = await db.collection('articulos').insertOne(articulo);
+  // Registrar movimiento de creación
+  await registrarMovimiento({
+    db,
+    articuloId: result.insertedId,
+    tipo: 'creacion',
+    cantidad: articulo.stock,
+    stockAntes: 0,
+    stockDespues: articulo.stock,
+    usuarioId: req.user?._id,
+    usuarioNombre: req.user?.nombre,
+    motivo: 'Creación de artículo'
+  });
+  res.json({ insertedId: result.insertedId });
 })
 
 // PUT actualizar articulo
-router.put('/:id', async (req, res) => {
-  const { ObjectId } = require('mongodb')
-  const id = req.params.id
-  const data = req.body
-
-  const result = await getDB().collection('articulos').updateOne(
+router.put('/:id', requireAuth, async (req, res) => {
+  const { ObjectId } = require('mongodb');
+  const id = req.params.id;
+  const data = req.body;
+  const db = getDB();
+  const articulosCol = db.collection('articulos');
+  const articuloAntes = await articulosCol.findOne({ _id: new ObjectId(id) });
+  const result = await articulosCol.updateOne(
     { _id: new ObjectId(id) },
     { $set: data }
-  )
-
-  res.json({ modifiedCount: result.modifiedCount })
+  );
+  // Registrar movimiento de ajuste si cambia el stock
+  if (data.stock !== undefined && articuloAntes && data.stock !== articuloAntes.stock) {
+    await registrarMovimiento({
+      db,
+      articuloId: id,
+      tipo: 'ajuste',
+      cantidad: data.stock - articuloAntes.stock,
+      stockAntes: articuloAntes.stock,
+      stockDespues: data.stock,
+      usuarioId: req.user?._id,
+      usuarioNombre: req.user?.nombre,
+      motivo: 'Ajuste de stock'
+    });
+  }
+  res.json({ modifiedCount: result.modifiedCount });
 })
 
 // DELETE eliminar articulo
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   const { ObjectId } = require('mongodb')
   const id = req.params.id
 
   const result = await getDB().collection('articulos').deleteOne({ _id: new ObjectId(id) })
   res.json({ deletedCount: result.deletedCount })
 })
+
+// GET historial de movimientos
+router.get('/movimientos', requireAuth, async (req, res) => {
+  const db = getDB();
+  const { articuloId } = req.query;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 6;
+  const skip = (page - 1) * limit;
+  const filter = articuloId ? { articuloId: articuloId } : {};
+
+  const total = await db.collection('movimientos_inventario').countDocuments(filter);
+  const movimientos = await db.collection('movimientos_inventario')
+    .find(filter)
+    .sort({ fecha: -1 })
+    .skip(skip)
+    .limit(limit)
+    .toArray();
+
+  res.json({
+    data: movimientos,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit)
+  });
+});
 
 module.exports = router

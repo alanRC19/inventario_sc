@@ -8,6 +8,54 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --card-bg: #fff;
+  --card-border: #ececec;
+  --card-shadow: 0 1px 2px 0 rgba(16, 24, 40, 0.05);
+  --primary: #800020;
+  --primary-contrast: #fff;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+}
+
+body.dark {
+  --background: #18181b;
+  --foreground: #f3f4f6;
+  --card-bg: #232326;
+  --card-border: #232326;
+  --card-shadow: 0 1px 2px 0 rgba(0,0,0,0.25);
+  --primary: #800020;
+  --primary-contrast: #fff;
+  --muted: #232326;
+  --muted-foreground: #a1a1aa;
+}
+
+.bg-app {
+  background: var(--background) !important;
+}
+.text-app {
+  color: var(--foreground) !important;
+}
+.bg-card {
+  background: var(--card-bg) !important;
+}
+.text-card {
+  color: var(--foreground) !important;
+}
+.border-app {
+  border-color: var(--card-border) !important;
+}
+.shadow-app {
+  box-shadow: var(--card-shadow) !important;
+}
+.bg-primary {
+  background: var(--primary) !important;
+  color: var(--primary-contrast) !important;
+}
+.text-muted {
+  color: var(--muted-foreground) !important;
+}
+.bg-muted {
+  background: var(--muted) !important;
 }
 
 @theme inline {

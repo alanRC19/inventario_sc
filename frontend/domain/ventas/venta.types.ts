@@ -6,6 +6,7 @@ export interface ProductoVenta {
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
+  proveedor?: string;
 }
 
 export interface Venta {

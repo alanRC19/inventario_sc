@@ -1,10 +1,15 @@
 // Funciones de acceso a datos y lógica de negocio para Ventas
 
-import { Venta, VentasPaginadas, NuevaVenta } from './venta.types';
+import { Venta, NuevaVenta, VentasPaginadas } from './venta.types';
+
+export interface VentasPaginadasConTotal extends Omit<VentasPaginadas, 'data'> {
+  data: Venta[];
+  totalVendido: number;
+}
 
 const API_URL = 'http://localhost:3001/api/ventas';
 
-export async function fetchVentas(page = 1, limit = 6, search = "", fechaInicio = "", fechaFin = ""): Promise<VentasPaginadas> {
+export async function fetchVentas(page = 1, limit = 6, search = "", fechaInicio = "", fechaFin = ""): Promise<VentasPaginadasConTotal> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (search) params.append("search", search);
   if (fechaInicio) params.append("fechaInicio", fechaInicio);

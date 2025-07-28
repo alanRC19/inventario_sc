@@ -26,3 +26,8 @@ export async function obtenerVentasPorPeriodo(fechaInicio?: string, fechaFin?: s
   const res = await fetch(`${API_URL}/ventas-periodo?${params.toString()}`);
   return res.json();
 } 
+
+export async function obtenerArticulosNoVendidos(): Promise<any> {
+  const res = await fetch('http://localhost:3001/api/reportes/no-vendidos');
+  return res.json();
+} 

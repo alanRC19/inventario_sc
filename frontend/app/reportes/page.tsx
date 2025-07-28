@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import { ReporteDetallado, EstadisticasGenerales } from "@/domain/reportes/reporte.types"
-import { obtenerReporteGeneral } from "@/domain/reportes/reporte.service"
+import { obtenerReporteGeneral, obtenerArticulosNoVendidos } from "@/domain/reportes/reporte.service"
 import { DateRangeFilter } from "@/shared/components/DateRangeFilter"
 import jsPDF from "jspdf"
 
@@ -10,6 +10,8 @@ export default function ReportesPage() {
   const [loading, setLoading] = useState(true)
   const [fechaInicio, setFechaInicio] = useState("")
   const [fechaFin, setFechaFin] = useState("")
+  const [articulosNoVendidos, setArticulosNoVendidos] = useState<any[]>([]);
+  const [loadingNoVendidos, setLoadingNoVendidos] = useState(true);
 
   const fetchReporte = async () => {
     setLoading(true)
@@ -25,8 +27,13 @@ export default function ReportesPage() {
   }
 
   useEffect(() => {
-    fetchReporte()
-  }, [fechaInicio, fechaFin])
+    fetchReporte();
+    setLoadingNoVendidos(true);
+    obtenerArticulosNoVendidos().then(res => {
+      setArticulosNoVendidos(res.data || []);
+      setLoadingNoVendidos(false);
+    }).catch(() => setLoadingNoVendidos(false));
+  }, [fechaInicio, fechaFin]);
 
   // exportar a pdf
   const exportarPDF = () => {
@@ -99,8 +106,8 @@ export default function ReportesPage() {
   return (
     <main className="p-8 w-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-black">Reportes</h1>
-        <p className="text-gray-600">Análisis detallado de ventas e inventario</p>
+        <h1 className="text-3xl font-bold mb-2 text-card">Reportes</h1>
+        <p className="text-muted">Análisis detallado de ventas e inventario</p>
       </div>
 
       {/* filtros de fecha */}
@@ -120,86 +127,86 @@ export default function ReportesPage() {
       <div className="mb-4 flex justify-end">
         <button
           onClick={exportarPDF}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow transition"
+          className="bg-black text-white px-5 py-2 rounded-lg font-semibold hover:bg-gray-900 transition flex items-center gap-2 shadow"
         >
-          Exportar a PDF
+          Generar PDF
         </button>
       </div>
 
       {/* estadisticas generales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow border border-[#ececec] p-6 hover:shadow-lg transition-shadow">
+        <div className="bg-card rounded-xl shadow-app border border-app p-6 hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Total Ventas</p>
-              <p className="text-3xl font-bold text-black mt-2">
+              <p className="text-sm font-medium text-muted uppercase tracking-wider">Total Ventas</p>
+              <p className="text-3xl font-bold text-card mt-2">
                 {estadisticasGenerales?.totalVentas ?? 0}
               </p>
             </div>
-            <span className="material-icons text-2xl text-black bg-transparent">point_of_sale</span>
+            <span className="material-icons text-2xl text-card bg-transparent">point_of_sale</span>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted">
               Ventas registradas en el período
             </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow border border-[#ececec] p-6 hover:shadow-lg transition-shadow">
+        <div className="bg-card rounded-xl shadow-app border border-app p-6 hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Ingresos Totales</p>
-              <p className="text-3xl font-bold text-black mt-2">
+              <p className="text-sm font-medium text-muted uppercase tracking-wider">Ingresos Totales</p>
+              <p className="text-3xl font-bold text-card mt-2">
                 ${estadisticasGenerales?.totalIngresos?.toLocaleString('es-MX', { minimumFractionDigits: 2 }) ?? '0.00'}
               </p>
             </div>
-            <span className="material-icons text-2xl text-black bg-transparent">attach_money</span>
+            <span className="material-icons text-2xl text-card bg-transparent">attach_money</span>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted">
               Ingresos generados en el período
             </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow border border-[#ececec] p-6 hover:shadow-lg transition-shadow">
+        <div className="bg-card rounded-xl shadow-app border border-app p-6 hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Valor Inventario</p>
-              <p className="text-3xl font-bold text-black mt-2">
+              <p className="text-sm font-medium text-muted uppercase tracking-wider">Valor Inventario</p>
+              <p className="text-3xl font-bold text-card mt-2">
                 ${estadisticasGenerales?.valorInventario?.toLocaleString('es-MX', { minimumFractionDigits: 2 }) ?? '0.00'}
               </p>
             </div>
-            <span className="material-icons text-2xl text-black bg-transparent">inventory_2</span>
+            <span className="material-icons text-2xl text-card bg-transparent">inventory_2</span>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted">
               Valor total del inventario actual
             </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow border border-[#ececec] p-6 hover:shadow-lg transition-shadow">
+        <div className="bg-card rounded-xl shadow-app border border-app p-6 hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Artículos</p>
-              <p className="text-3xl font-bold text-black mt-2">
+              <p className="text-sm font-medium text-muted uppercase tracking-wider">Artículos</p>
+              <p className="text-3xl font-bold text-card mt-2">
                 {estadisticasGenerales?.totalArticulos ?? 0}
               </p>
             </div>
-            <span className="material-icons text-2xl text-black bg-transparent">category</span>
+            <span className="material-icons text-2xl text-card bg-transparent">category</span>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted">
               Total de productos en inventario
             </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow border border-[#ececec] p-6 hover:shadow-lg transition-shadow">
+        <div className="bg-card rounded-xl shadow-app border border-app p-6 hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Stock Bajo</p>
+              <p className="text-sm font-medium text-muted uppercase tracking-wider">Stock Bajo</p>
               <p className="text-3xl font-bold text-yellow-600 mt-2">
                 {estadisticasGenerales?.articulosStockBajo ?? 0}
               </p>
@@ -207,16 +214,16 @@ export default function ReportesPage() {
             <span className="material-icons text-2xl text-yellow-600 bg-transparent">warning</span>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted">
               Productos con stock menor a 5 unidades
             </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow border border-[#ececec] p-6 hover:shadow-lg transition-shadow">
+        <div className="bg-card rounded-xl shadow-app border border-app p-6 hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wider">Sin Stock</p>
+              <p className="text-sm font-medium text-muted uppercase tracking-wider">Sin Stock</p>
               <p className="text-3xl font-bold text-red-600 mt-2">
                 {estadisticasGenerales?.articulosSinStock ?? 0}
               </p>
@@ -224,7 +231,7 @@ export default function ReportesPage() {
             <span className="material-icons text-2xl text-red-600 bg-transparent">error</span>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted">
               Productos agotados
             </p>
           </div>
@@ -234,7 +241,7 @@ export default function ReportesPage() {
       {/* grafcicas y Tablas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* ventas por periodo*/}
-        <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
+        <div className="bg-card rounded-xl shadow-app border border-app p-6">
           <h3 className="text-lg font-semibold mb-4">Ventas Últimos 7 Días</h3>
           <div className="space-y-3">
             {(ventasPorPeriodo ?? []).map((periodo, index) => (
@@ -258,7 +265,7 @@ export default function ReportesPage() {
         </div>
 
         {/* articulos mas vendidos */}
-        <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
+        <div className="bg-card rounded-xl shadow-app border border-app p-6">
           <h3 className="text-lg font-semibold mb-4">Productos Más Vendidos</h3>
           <div className="space-y-3">
             {(productosMasVendidos ?? []).map((producto, index) => (
@@ -276,7 +283,7 @@ export default function ReportesPage() {
         </div>
 
         {/* clientes frecuentes */}
-        <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
+        <div className="bg-card rounded-xl shadow-app border border-app p-6">
           <h3 className="text-lg font-semibold mb-4">Clientes Más Frecuentes</h3>
           <div className="space-y-3">
             {(clientesMasFrecuentes ?? []).map((cliente, index) => (
@@ -294,7 +301,7 @@ export default function ReportesPage() {
         </div>
 
         {/* reporte de ventas mensuales */}
-        <div className="bg-white rounded-xl shadow border border-[#ececec] p-6">
+        <div className="bg-card rounded-xl shadow-app border border-app p-6">
           <h3 className="text-lg font-semibold mb-4">Reporte Mensual</h3>
           <div className="space-y-3">
             {(reporteMensual ?? []).map((mes, index) => (
@@ -310,6 +317,32 @@ export default function ReportesPage() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Apartado de artículos no vendidos */}
+      <div className="bg-card rounded-xl shadow-app border border-app p-6 mb-8 mt-8">
+        <h2 className="text-xl font-bold mb-4 text-card">Artículos no vendidos</h2>
+        {loadingNoVendidos ? (
+          <div className="text-gray-500">Cargando...</div>
+        ) : articulosNoVendidos.length === 0 ? (
+          <div className="text-green-600">Todos los artículos han tenido al menos una venta.</div>
+        ) : (
+          <div className="space-y-3">
+            {articulosNoVendidos.map((art: any) => (
+              <div key={art._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="font-medium">{art.nombre}</p>
+                  <p className="text-sm text-gray-600">
+                    Categoría: {art.categoria || '-'} | Proveedor: {art.proveedor || '-'}
+                  </p>
+                </div>
+                <p className="font-semibold text-gray-800">
+                  Stock: {art.stock}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* alertas de inventario*/}
