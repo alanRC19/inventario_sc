@@ -1,0 +1,52 @@
+/* Estilos para el layout */
+.main-content {
+  margin-top: 64px;
+}
+
+/* Estilos del sidebar y header */
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background-color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  transition: transform 0.2s;
+}
+
+.sidebar.closed {
+  transform: translateX(-176px);
+}
+
+.content-wrapper {
+  transition: margin-left 0.2s;
+}
+
+.content-wrapper.sidebar-open {
+  margin-left: 240px;
+}
+
+.content-wrapper.sidebar-closed {
+  margin-left: 64px;
+}
+
+.header {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 64px;
+  background-color: white;
+  z-index: 40;
+  transition: width 0.2s, margin-left 0.2s;
+}
+
+.header.sidebar-open {
+  width: calc(100vw - 240px);
+  margin-left: 240px;
+}
+
+.header.sidebar-closed {
+  width: calc(100vw - 64px);
+  margin-left: 64px;
+}

@@ -7,7 +7,7 @@ import { useState, useEffect } from "react"
 import { Inter } from "next/font/google" // <--- ASEGÚRATE DE QUE ESTA LÍNEA ESTÉ ASÍ
 import "./globals.css"
 import { HamburgerIcon } from "@/shared/components/HamburgerIcon" // Asegúrate de que esta ruta sea correcta
-import { Settings } from "lucide-react" // Importa el icono de configuración
+import { Settings as SettingsIcon } from "@mui/icons-material" // Importa el icono de configuración de Material UI
 
 // Definimos la fuente Inter
 const inter = Inter({
@@ -140,7 +140,7 @@ export default function ClientLayout({
                 className={`flex items-center ${sidebarOpen ? "gap-3 px-3" : "justify-center"} py-2 rounded-lg hover:bg-[#f3f4f6] transition text-base font-medium text-black`}
               >
                 <span className="text-black">
-                  <Settings className={`w-6 h-6 ${sidebarOpen ? "text-lg" : "text-base"}`} />{" "}
+                  <SettingsIcon className={`w-6 h-6 ${sidebarOpen ? "text-lg" : "text-base"}`} />{" "}
                   {/* Icono de Lucide React */}
                 </span>
                 {sidebarOpen && "Configuración"}
@@ -184,7 +184,7 @@ export default function ClientLayout({
                     className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#f3f4f6] transition text-base font-medium text-black"
                     onClick={() => setMobileSidebar(false)}
                   >
-                    <Settings className="w-6 h-6 text-lg" />
+                    <SettingsIcon className="w-6 h-6 text-lg" />
                     Configuración
                   </Link>
                 </div>
