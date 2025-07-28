@@ -5,6 +5,9 @@ export interface Proveedor {
   nombre: string;
   contacto?: string;
   telefono?: string;
+  direccion?: string;
+  correo?: string;
+  compras?: number;
 }
 
 export interface ProveedoresPaginados {

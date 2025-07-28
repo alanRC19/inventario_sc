@@ -177,4 +177,31 @@ router.get('/estadisticas', async (req, res) => {
   }
 })
 
+// GET artículos no vendidos
+router.get('/no-vendidos', async (req, res) => {
+  try {
+    const db = getDB();
+    const articulosCollection = db.collection('articulos');
+    const ventasCollection = db.collection('ventas');
+
+    // Obtener todos los IDs de artículos vendidos
+    const ventas = await ventasCollection.find({}).toArray();
+    const vendidosSet = new Set();
+    ventas.forEach(venta => {
+      (venta.productos || []).forEach(producto => {
+        vendidosSet.add(producto.articuloId?.toString());
+      });
+    });
+
+    // Buscar artículos cuyo _id no está en vendidosSet
+    const articulos = await articulosCollection.find({}).toArray();
+    const noVendidos = articulos.filter(art => !vendidosSet.has(art._id.toString()));
+
+    res.json({ data: noVendidos, total: noVendidos.length });
+  } catch (error) {
+    console.error('Error obteniendo artículos no vendidos:', error);
+    res.status(500).json({ error: 'Error obteniendo artículos no vendidos' });
+  }
+});
+
 module.exports = router 

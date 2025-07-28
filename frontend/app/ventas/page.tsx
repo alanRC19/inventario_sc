@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState, useRef } from "react"
 import { Venta, VentasPaginadas, ProductoVenta } from "@/domain/ventas/venta.types"
-import { fetchVentas, agregarVenta as agregarVentaService, eliminarVenta as eliminarVentaService, editarVenta as editarVentaService } from "@/domain/ventas/venta.service"
+import { fetchVentas, agregarVenta as agregarVentaService, eliminarVenta as eliminarVentaService, editarVenta as editarVentaService, VentasPaginadasConTotal } from "@/domain/ventas/venta.service"
 import { Table, TableColumn } from "@/shared/components/Table"
 import { Modal } from "@/shared/components/Modal"
 import { SearchBar } from "@/shared/components/SearchBar"
@@ -39,18 +39,21 @@ export default function VentasPage() {
   const [editProductosSeleccionados, setEditProductosSeleccionados] = useState<ProductoVenta[]>([])
   const [editMetodoPago, setEditMetodoPago] = useState<'efectivo' | 'tarjeta' | 'transferencia'>('efectivo')
   const [showEditModal, setShowEditModal] = useState(false)
+  const [totalVendido, setTotalVendido] = useState(0)
 
   const fetchVentasData = async (pageToFetch = page, search = searchTerm, inicio = fechaInicio, fin = fechaFin) => {
     setLoading(true)
     try {
-      const res: VentasPaginadas = await fetchVentas(pageToFetch, 6, search, inicio, fin)
+      const res: VentasPaginadasConTotal = await fetchVentas(pageToFetch, 6, search, inicio, fin)
       setVentas(res.data || [])
       setTotalPages(res.totalPages || 1)
       setTotal(res.total || 0)
+      setTotalVendido(res.totalVendido || 0)
     } catch (e) {
       setVentas([])
       setTotalPages(1)
       setTotal(0)
+      setTotalVendido(0)
     }
     setLoading(false)
   }
@@ -85,7 +88,8 @@ export default function VentasPage() {
       nombre: articulo.nombre,
       cantidad: cantidadNum,
       precioUnitario: articulo.precioUnitario || 0,
-      subtotal: (articulo.precioUnitario || 0) * cantidadNum
+      subtotal: (articulo.precioUnitario || 0) * cantidadNum,
+      proveedor: (articulo as any).proveedor || undefined
     }
 
     setProductosSeleccionados([...productosSeleccionados, nuevoProducto])
@@ -157,7 +161,8 @@ export default function VentasPage() {
       nombre: articulo.nombre,
       cantidad: cantidadNum,
       precioUnitario: articulo.precioUnitario || 0,
-      subtotal: (articulo.precioUnitario || 0) * cantidadNum
+      subtotal: (articulo.precioUnitario || 0) * cantidadNum,
+      proveedor: (articulo as any).proveedor || undefined
     }
 
     setEditProductosSeleccionados([...editProductosSeleccionados, nuevoProducto])
@@ -218,15 +223,15 @@ export default function VentasPage() {
   return (
     <main className="p-8 w-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-black">Ventas</h1>
-        <p className="text-gray-600">Registro y consulta de ventas</p>
+        <h1 className="text-3xl font-bold mb-2 text-card">Ventas</h1>
+        <p className="text-muted">Registro y consulta de ventas</p>
         {/* Resumen de ventas */}
-        <div className="mt-4 bg-white rounded-lg shadow p-4 flex flex-col items-start">
-          <span className="text-xl font-semibold text-black">
-            Total vendido: ${ventas.reduce((acc, v) => acc + v.total, 0).toFixed(2)}
+        <div className="mt-4 bg-card rounded-lg shadow-app p-4 flex flex-col items-start border border-app">
+          <span className="text-xl font-semibold text-card">
+            Total vendido: ${totalVendido.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
           </span>
-          <span className="text-sm text-gray-600 mt-1">
-            Total de ventas registradas: {ventas.length}
+          <span className="text-sm text-muted mt-1">
+            Total de ventas registradas: {total}
           </span>
         </div>
       </div>

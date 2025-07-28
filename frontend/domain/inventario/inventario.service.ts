@@ -12,23 +12,33 @@ export async function fetchArticulos(page = 1, limit = 6, search = ""): Promise<
 }
 
 export async function agregarArticulo(data: Omit<Articulo, '_id' | 'estado'>) {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   await fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
     body: JSON.stringify(data),
   });
 }
 
 export async function eliminarArticulo(id: string) {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   await fetch(`${API_URL}/${id}`, {
     method: 'DELETE',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 }
 
 export async function editarArticulo(id: string, data: Partial<Omit<Articulo, '_id' | 'estado'>>) {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   await fetch(`${API_URL}/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
     body: JSON.stringify(data),
   });
 }

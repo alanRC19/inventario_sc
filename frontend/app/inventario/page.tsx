@@ -139,21 +139,30 @@ export default function InventarioPage() {
       {/* Título y botón agregar */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-black">Inventario</h2>
-          <p className="text-gray-600">Gestiona los productos y existencias de tu inventario.</p>
+          <h2 className="text-3xl font-bold text-card">Inventario</h2>
+          <p className="text-muted">Gestiona los productos y existencias de tu inventario.</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-black text-white px-5 py-2 rounded-lg font-semibold hover:bg-gray-900 transition flex items-center gap-2 shadow"
-        >
-          <span className="material-icons text-lg">add</span>
-          Nuevo artículo
-        </button>
+        <div className="flex gap-2">
+          <a
+            href="/inventario/movimientos"
+            className="bg-gray-200 hover:bg-gray-300 text-black font-semibold px-4 py-2 rounded flex items-center gap-2 transition"
+          >
+            <span className="material-icons text-lg">history</span>
+            Ver historial de movimientos
+          </a>
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-black text-white px-5 py-2 rounded-lg font-semibold hover:bg-gray-900 transition flex items-center gap-2 shadow"
+          >
+            <span className="material-icons text-lg">add</span>
+            Nuevo artículo
+          </button>
+        </div>
       </div>
 
       {/* Texto y búsqueda fuera de la tabla */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
-        <span className="text-2xl font-semibold text-[#18181b] tracking-tight">Lista de artículos</span>
+        <span className="text-2xl font-semibold text-card tracking-tight">Lista de artículos</span>
         <SearchBar
           value={searchTerm}
           onChange={e => {

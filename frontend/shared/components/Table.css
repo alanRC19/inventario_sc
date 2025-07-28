@@ -36,4 +36,25 @@
 }
 .table tr:hover {
   background: #f3f4f6;
+}
+body.dark .table-container {
+  background: #232326;
+  border-color: #232326;
+}
+body.dark .table thead tr {
+  background: #232326;
+  color: #f3f4f6;
+  border-bottom: 1px solid #35353a;
+}
+body.dark .table th {
+  color: #f3f4f6;
+}
+body.dark .table td {
+  color: #e5e7eb;
+}
+body.dark .table tr {
+  border-bottom: 1px solid #35353a;
+}
+body.dark .table tr:hover {
+  background: #18181b;
 } 

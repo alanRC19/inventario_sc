@@ -50,12 +50,19 @@ router.get('/', async (req, res) => {
 
   const total = await collection.countDocuments(filter)
   const ventas = await collection.find(filter).skip(skip).limit(limit).sort({ fecha: -1 }).toArray()
+  // Calcular el total vendido (suma de todos los totales de ventas que cumplen el filtro)
+  const totalVendidoAgg = await collection.aggregate([
+    { $match: filter },
+    { $group: { _id: null, totalVendido: { $sum: "$total" } } }
+  ]).toArray();
+  const totalVendido = totalVendidoAgg[0]?.totalVendido || 0;
 
   res.json({
     data: ventas,
     total,
     page,
-    totalPages: Math.ceil(total / limit)
+    totalPages: Math.ceil(total / limit),
+    totalVendido
   })
 })
 
