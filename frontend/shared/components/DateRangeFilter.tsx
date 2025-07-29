@@ -29,7 +29,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
           value={fechaInicio}
           onChange={(e) => onFechaInicioChange(e.target.value)}
           max={hoy}
-          className="border border-[#ececec] p-2 rounded-lg text-black bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm"
+          className="border border-app p-2 rounded-lg text-app bg-card focus:outline-none focus:ring-2 focus:ring-primary text-sm transition"
         />
       </div>
       
@@ -41,7 +41,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
           onChange={(e) => onFechaFinChange(e.target.value)}
           max={hoy}
           min={fechaInicio}
-          className="border border-[#ececec] p-2 rounded-lg text-black bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm"
+          className="border border-app p-2 rounded-lg text-app bg-card focus:outline-none focus:ring-2 focus:ring-primary text-sm transition"
         />
       </div>
 
@@ -51,25 +51,23 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
             onFechaInicioChange(haceUnMes);
             onFechaFinChange(hoy);
           }}
-          className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
+          className="px-3 py-1 text-xs bg-primary/10 text-primary rounded hover:bg-primary hover:text-white transition"
         >
           Último mes
         </button>
-        
         <button
           onClick={() => {
             onFechaInicioChange(hoy);
             onFechaFinChange(hoy);
           }}
-          className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
+          className="px-3 py-1 text-xs bg-primary/10 text-primary rounded hover:bg-primary hover:text-white transition"
         >
           Hoy
         </button>
-        
         {(fechaInicio || fechaFin) && (
           <button
             onClick={onLimpiarFiltros}
-            className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
+            className="px-3 py-1 text-xs bg-danger/10 text-danger rounded hover:bg-danger hover:text-white transition"
           >
             Limpiar
           </button>

@@ -14,9 +14,9 @@ const ClientTime: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-white/50 backdrop-blur-sm border border-primary/20 rounded-xl px-4 py-3 shadow-sm">
+    <div className="bg-card/80 backdrop-blur-sm border border-app/20 rounded-xl px-4 py-3 shadow-sm transition-colors">
       <div className="text-center">
-        <div className="text-sm font-medium text-muted mb-1">
+        <div className="text-sm font-medium text-app mb-1 transition-colors">
           {currentTime.toLocaleDateString('es-ES', { 
             weekday: 'long', 
             year: 'numeric', 
@@ -24,7 +24,7 @@ const ClientTime: React.FC = () => {
             day: 'numeric' 
           })}
         </div>
-        <div className="text-lg font-bold font-mono text-primary">
+        <div className="text-lg font-bold font-mono text-primary transition-colors">
           {currentTime.toLocaleTimeString('es-ES', { 
             hour: '2-digit', 
             minute: '2-digit', 

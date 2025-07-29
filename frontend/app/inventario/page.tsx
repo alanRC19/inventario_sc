@@ -371,16 +371,7 @@ export default function InventarioPage() {
             <option key={cat._id} value={cat.nombre}>{cat.nombre}</option>
           ))}
         </select>
-        <select
-          className="border border-[#ececec] p-2 rounded-lg w-full mb-4 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
-          value={proveedor}
-          onChange={e => setProveedor(e.target.value)}
-        >
-          <option value="">Selecciona un proveedor</option>
-          {proveedoresDisponibles.map((p) => (
-            <option key={p._id} value={p.nombre}>{p.nombre}</option>
-          ))}
-        </select>
+        {/* Proveedor eliminado del modal */}
         <div className="flex justify-end gap-2 mt-4">
           <button
             className="bg-gray-200 text-black px-4 py-2 rounded-lg hover:bg-gray-300 transition"

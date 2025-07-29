@@ -88,7 +88,7 @@ router.get('/:id', async (req, res) => {
 
 // POST crear nueva venta
 router.post('/', async (req, res) => {
-  const { cliente, productos, total, metodoPago } = req.body
+  const { cliente, productos, total, metodoPago, telefono } = req.body
   
   if (!cliente || !productos || !Array.isArray(productos) || productos.length === 0) {
     return res.status(400).json({ error: 'Cliente y productos son requeridos' })
@@ -99,6 +99,7 @@ router.post('/', async (req, res) => {
     productos,
     total: parseFloat(total),
     metodoPago: metodoPago || 'efectivo',
+    telefono: telefono || null, // Campo opcional para WhatsApp
     fecha: new Date(),
     estado: 'completada'
   }

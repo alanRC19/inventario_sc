@@ -51,4 +51,35 @@ export interface ActividadReciente {
   description: string;
   timestamp: string;
   status: 'success' | 'info' | 'warning' | 'error';
+}
+
+export interface ArticuloNoVendido {
+  _id: string;
+  nombre: string;
+  categoria?: string;
+  proveedor?: string;
+  stock: number;
+  precioUnitario?: number;
+}
+
+export interface SolicitudArticulo {
+  _id?: string;
+  nombre: string;
+  descripcion?: string;
+  cliente: string;
+  telefono?: string;
+  observaciones?: string;
+  fecha?: Date;
+  fechaActualizacion?: Date;
+  estado: 'pendiente' | 'en_proceso' | 'completada' | 'cancelada';
+}
+
+export interface RespuestaAPI<T> {
+  data: T;
+  total: number;
+}
+
+export interface RespuestaSolicitud {
+  message: string;
+  data: SolicitudArticulo;
 } 

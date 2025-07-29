@@ -1,6 +1,22 @@
 import React from 'react';
 
-const InventoryFlow: React.FC = () => {
+interface InventoryFlowProps {
+  totalEntradas?: number;
+  totalStock?: number;
+  totalSalidas?: number;
+  valorEntradas?: number;
+  valorStock?: number;
+  valorSalidas?: number;
+}
+
+const InventoryFlow: React.FC<InventoryFlowProps> = ({
+  totalEntradas = 0,
+  totalStock = 0,
+  totalSalidas = 0,
+  valorEntradas = 0,
+  valorStock = 0,
+  valorSalidas = 0
+}) => {
   return (
     <div className="bg-card rounded-xl shadow-app border border-app p-6">
       <div className="flex items-center gap-3 mb-6">
@@ -18,8 +34,10 @@ const InventoryFlow: React.FC = () => {
             <span className="material-icons text-green-600 text-2xl">input</span>
           </div>
           <h4 className="font-semibold text-green-800 mb-2">Entradas</h4>
-          <p className="text-2xl font-bold text-green-700 mb-1">--</p>
-          <p className="text-sm text-green-600">Productos ingresados</p>
+          <p className="text-2xl font-bold text-green-700 mb-1">{totalEntradas}</p>
+          <p className="text-sm text-green-600">
+            ${valorEntradas.toLocaleString('es-MX', { minimumFractionDigits: 0 })}
+          </p>
         </div>
 
         {/* Stock Actual */}
@@ -28,8 +46,10 @@ const InventoryFlow: React.FC = () => {
             <span className="material-icons text-blue-600 text-2xl">inventory_2</span>
           </div>
           <h4 className="font-semibold text-blue-800 mb-2">Stock Actual</h4>
-          <p className="text-2xl font-bold text-blue-700 mb-1">--</p>
-          <p className="text-sm text-blue-600">Productos disponibles</p>
+          <p className="text-2xl font-bold text-blue-700 mb-1">{totalStock}</p>
+          <p className="text-sm text-blue-600">
+            ${valorStock.toLocaleString('es-MX', { minimumFractionDigits: 0 })}
+          </p>
         </div>
 
         {/* Salidas */}
@@ -38,8 +58,10 @@ const InventoryFlow: React.FC = () => {
             <span className="material-icons text-red-600 text-2xl">output</span>
           </div>
           <h4 className="font-semibold text-red-800 mb-2">Salidas</h4>
-          <p className="text-2xl font-bold text-red-700 mb-1">--</p>
-          <p className="text-sm text-red-600">Productos vendidos</p>
+          <p className="text-2xl font-bold text-red-700 mb-1">{totalSalidas}</p>
+          <p className="text-sm text-red-600">
+            ${valorSalidas.toLocaleString('es-MX', { minimumFractionDigits: 0 })}
+          </p>
         </div>
       </div>
 

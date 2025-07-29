@@ -15,6 +15,7 @@ export interface Venta {
   productos: ProductoVenta[];
   total: number;
   metodoPago: 'efectivo' | 'tarjeta' | 'transferencia';
+  telefono?: string; // Campo opcional para WhatsApp
   fecha: string;
   estado: 'completada' | 'cancelada';
 }
@@ -31,4 +32,5 @@ export interface NuevaVenta {
   productos: ProductoVenta[];
   total: number;
   metodoPago: 'efectivo' | 'tarjeta' | 'transferencia';
+  telefono?: string; // Campo opcional para WhatsApp
 } 

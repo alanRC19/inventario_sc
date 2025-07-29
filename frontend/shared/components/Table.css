@@ -1,3 +1,14 @@
+.sidebar-indicator {
+  width: 4px;
+  height: 60%;
+  background: var(--color-app, #800020) !important;
+  border-radius: 4px;
+  display: block;
+  transition: background 0.2s;
+}
+body.dark .sidebar-indicator {
+  background: var(--color-app, #800020) !important;
+}
 /* Estilos para el componente de tabla*/
 .table-container {
   background: #fff;
@@ -26,6 +37,8 @@
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  background: transparent;
+  color: var(--color-app, #800020);
 }
 .table td {
   padding: 1rem;
@@ -47,7 +60,23 @@ body.dark .table thead tr {
   border-bottom: 1px solid #35353a;
 }
 body.dark .table th {
-  color: #f3f4f6;
+  color: var(--color-app, #f3f4f6);
+}
+/* Sidebar indicator usa el color primario del tema en ambos modos */
+.sidebar-indicator {
+  width: 4px;
+  height: 60%;
+  background: var(--color-app, #800020);
+  border-radius: 4px;
+  display: block;
+}
+/* Sidebar indicator usa el color primario del tema */
+.sidebar-indicator {
+  width: 4px;
+  height: 60%;
+  background: var(--primary, #800020);
+  border-radius: 4px;
+  display: block;
 }
 body.dark .table td {
   color: #e5e7eb;

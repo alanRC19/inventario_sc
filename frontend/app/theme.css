@@ -1,0 +1,90 @@
+/* Utilidades de color de tema SOLO para botones y textos, no para bordes ni backgrounds generales */
+/* Usar --color-app y --color-danger para acentos globales */
+.bg-primary { background: var(--color-app) !important; }
+.bg-primary\/10 { background: color-mix(in srgb, var(--color-app) 10%, transparent) !important; }
+.bg-primary\/20 { background: color-mix(in srgb, var(--color-app) 20%, transparent) !important; }
+.text-primary { color: var(--color-app) !important; }
+.bg-danger { background: var(--color-danger, #dc2626) !important; }
+.bg-danger\/10 { background: color-mix(in srgb, var(--color-danger, #dc2626) 10%, transparent) !important; }
+.text-danger { color: var(--color-danger, #dc2626) !important; }
+.bg-muted { background: #f3f4f6 !important; }
+.text-muted { color: #6b7280 !important; }
+/* Fondo y texto principal según modo */
+.bg-app { background: #f1f5f9 !important; }
+.text-app { color: var(--color-app-text, #18181b) !important; }
+.bg-card { background: #fff !important; }
+.text-card { color: var(--color-card-text, #18181b) !important; }
+body.dark .bg-app { background: #18181b !important; }
+body.dark .text-app { color: var(--color-app-text-dark, #f3f4f6) !important; }
+body.dark .bg-card { background: #232326 !important; }
+body.dark .text-card { color: var(--color-card-text-dark, #f3f4f6) !important; }
+/* ThemeSelector custom styles */
+.theme-btn {
+  min-height: 40px;
+}
+.theme-btn-icon {
+  transition: color 0.2s;
+}
+.theme-btn-icon-carmesi { color: #800020; }
+.theme-btn-icon-blue { color: #2563eb; }
+.theme-btn-icon-green { color: #059669; }
+.theme-btn-icon-purple { color: #7c3aed; }
+
+.theme-menu {
+  min-width: 120px;
+}
+.theme-menu-wide {
+  min-width: 180px;
+}
+
+.theme-color-btn-carmesi { background: #800020; }
+.theme-color-btn-blue { background: #2563eb; }
+.theme-color-btn-green { background: #059669; }
+.theme-color-btn-purple { background: #7c3aed; }
+
+.theme-color-btn {
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+/* Variables globales para acentos y peligros */
+:root {
+  --color-app: #800020;
+  --color-app-text: #18181b;
+  --color-app-text-dark: #f3f4f6;
+  --color-muted: #f3f4f6;
+  --color-card: #fff;
+  --color-card-text: #18181b;
+  --color-card-text-dark: #f3f4f6;
+  --color-btn: #800020;
+  --color-btn-hover: #a83232;
+  --color-danger: #dc2626;
+}
+body.theme-blue, body.dark.theme-blue {
+  --color-app: #2563eb;
+  --color-btn: #2563eb;
+  --color-btn-hover: #1d4ed8;
+}
+body.theme-green, body.dark.theme-green {
+  --color-app: #059669;
+  --color-btn: #059669;
+  --color-btn-hover: #047857;
+}
+body.theme-orange, body.dark.theme-orange {
+  --color-app: #ea580c;
+  --color-btn: #ea580c;
+  --color-btn-hover: #c2410c;
+}
+body.theme-purple, body.dark.theme-purple {
+  --color-app: #7c3aed;
+  --color-btn: #7c3aed;
+  --color-btn-hover: #5b21b6;
+}
+body.theme-pink, body.dark.theme-pink {
+  --color-app: #db2777;
+  --color-btn: #db2777;
+  --color-btn-hover: #be185d;
+}
+body.theme-default, body.dark.theme-default {
+  --color-app: #800020;
+  --color-btn: #800020;
+  --color-btn-hover: #a83232;
+}

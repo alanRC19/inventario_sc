@@ -11,16 +11,44 @@
   transition: all 0.2s;
 }
 .modal-content {
-  background: #fff;
+  background: var(--color-card, #fff);
   border-radius: 0.75rem;
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
   padding: 2rem;
   width: 100%;
   max-width: 28rem;
+  max-height: 90vh;
   position: relative;
   transition: all 0.2s;
   transform: scale(0.95);
   opacity: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  color: var(--color-app, #800020);
+}
+body.dark .modal-content {
+  background: var(--color-card, #232326);
+  color: var(--color-app, #f3f4f6);
+}
+
+/* Estilos para el scrollbar */
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 .modal-content.open {
   opacity: 1;

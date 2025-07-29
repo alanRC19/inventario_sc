@@ -3,6 +3,8 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./theme.css";
+import { ThemeSelector } from "@/shared/components/ThemeSelector";
 import { HamburgerIcon } from "@/shared/components/HamburgerIcon";
 import { jwtDecode } from "jwt-decode";
 import { usePathname } from "next/navigation";
@@ -172,14 +174,7 @@ export default function RootLayout({
                             {/* Indicador de página activa */}
                             {isActive && (
                               <span
-                                className="absolute left-0 top-1/2 -translate-y-1/2"
-                                style={{
-                                  width: '4px',
-                                  height: '60%',
-                                  background: '#800020',
-                                  borderRadius: '4px',
-                                  display: 'block',
-                                }}
+                                className="absolute left-0 top-1/2 -translate-y-1/2 sidebar-indicator"
                               />
                             )}
                             <span className="text-card">
@@ -211,16 +206,8 @@ export default function RootLayout({
                     })}
                   </ul>
                 </nav>
-                {/* Toggle modo oscuro */}
-                <button
-                  onClick={toggleDarkMode}
-                  className={`mt-auto mb-2 flex items-center justify-center w-full py-2 rounded-lg transition border border-app ${darkMode ? 'bg-muted text-app' : 'bg-muted text-app'} hover:bg-muted`}
-                  style={{ minHeight: 40 }}
-                  aria-label="Alternar modo oscuro"
-                >
-                  <span className="material-icons mr-2">{darkMode ? 'dark_mode' : 'light_mode'}</span>
-                  {sidebarOpen && (darkMode ? 'Modo claro' : 'Modo oscuro')}
-                </button>
+                {/* Selector de tema y modo */}
+                <ThemeSelector sidebarOpen={sidebarOpen} />
               </aside>
               {/* Sidebar móvil */}
               {mobileSidebar && (
@@ -242,16 +229,8 @@ export default function RootLayout({
                         ))}
                       </ul>
                     </nav>
-                    {/* Toggle modo oscuro móvil */}
-                    <button
-                      onClick={toggleDarkMode}
-                      className={`mt-auto mb-2 flex items-center justify-center w-full py-2 rounded-lg transition border border-app ${darkMode ? 'bg-muted text-app' : 'bg-muted text-app'} hover:bg-muted`}
-                      style={{ minHeight: 40 }}
-                      aria-label="Alternar modo oscuro"
-                    >
-                      <span className="material-icons mr-2">{darkMode ? 'dark_mode' : 'light_mode'}</span>
-                      {darkMode ? 'Modo claro' : 'Modo oscuro'}
-                    </button>
+                    {/* Selector de tema y modo móvil */}
+                    <ThemeSelector sidebarOpen={true} />
                   </aside>
                   <div className="flex-1 bg-black bg-opacity-30" onClick={() => setMobileSidebar(false)} />
                 </div>

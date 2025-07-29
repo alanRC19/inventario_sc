@@ -589,7 +589,14 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Flujo de inventario */}
           <div className="lg:col-span-2">
-            <InventoryFlow />
+            <InventoryFlow 
+              totalEntradas={totalEntradas}
+              totalStock={articulos.length}
+              totalSalidas={reporte?.estadisticasGenerales?.totalVentas || 0}
+              valorEntradas={totalEntradasMonto}
+              valorStock={valorInventario}
+              valorSalidas={totalIngresos}
+            />
           </div>
 
           {/* Gráfico de entradas */}

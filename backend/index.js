@@ -8,6 +8,8 @@ const ventasRoutes = require('./routes/ventas')
 const entradasRoutes = require('./routes/entradas')
 const reportesRoutes = require('./routes/reportes')
 const usuariosRouter = require('./routes/usuarios');
+const whatsappRoutes = require('./routes/whatsapp');
+const whatsappService = require('./whatsappService'); // Importar el servicio
 require('dotenv').config()
 
 const app = express()
@@ -29,6 +31,7 @@ app.use('/api/ventas', ventasRoutes)
 app.use('/api/entradas', entradasRoutes)
 app.use('/api/reportes', reportesRoutes)
 app.use('/api/usuarios', usuariosRouter);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // Debug: verificar que las rutas se cargan
 console.log('Rutas cargadas:', {
@@ -39,8 +42,25 @@ console.log('Rutas cargadas:', {
   entradas: !!entradasRoutes
 })
 
+// Función para inicializar WhatsApp automáticamente
+async function initializeWhatsAppService() {
+  try {
+    console.log('\n🚀 Inicializando servicio de WhatsApp...');
+    await whatsappService.initialize();
+    console.log('✅ Servicio de WhatsApp inicializado correctamente');
+  } catch (error) {
+    console.error('❌ Error inicializando WhatsApp:', error.message);
+    console.log('📱 Puedes inicializar manualmente desde el frontend');
+  }
+}
+
 connectDB().then(() => {
   app.listen(process.env.PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${process.env.PORT}`)
+    
+    // Inicializar WhatsApp después de que el servidor esté corriendo
+    setTimeout(() => {
+      initializeWhatsAppService();
+    }, 2000); // Esperar 2 segundos para que el servidor esté completamente listo
   })
 })

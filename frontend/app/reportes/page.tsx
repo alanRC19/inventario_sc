@@ -1,8 +1,9 @@
 "use client"
 import { useEffect, useState } from "react"
-import { ReporteDetallado, EstadisticasGenerales } from "@/domain/reportes/reporte.types"
-import { obtenerReporteGeneral, obtenerArticulosNoVendidos } from "@/domain/reportes/reporte.service"
+import { ReporteDetallado, SolicitudArticulo, ArticuloNoVendido } from "@/domain/reportes/reporte.types"
+import { obtenerReporteGeneral, obtenerArticulosNoVendidos, agregarSolicitudArticulo, obtenerSolicitudesArticulos, actualizarEstadoSolicitud } from "@/domain/reportes/reporte.service"
 import { DateRangeFilter } from "@/shared/components/DateRangeFilter"
+import { Modal } from "@/shared/components/Modal"
 import jsPDF from "jspdf"
 
 export default function ReportesPage() {
@@ -10,30 +11,120 @@ export default function ReportesPage() {
   const [loading, setLoading] = useState(true)
   const [fechaInicio, setFechaInicio] = useState("")
   const [fechaFin, setFechaFin] = useState("")
-  const [articulosNoVendidos, setArticulosNoVendidos] = useState<any[]>([]);
+  const [articulosNoVendidos, setArticulosNoVendidos] = useState<ArticuloNoVendido[]>([]);
   const [loadingNoVendidos, setLoadingNoVendidos] = useState(true);
+  const [solicitudes, setSolicitudes] = useState<SolicitudArticulo[]>([]);
+  const [loadingSolicitudes, setLoadingSolicitudes] = useState(true);
+  const [showModalSolicitud, setShowModalSolicitud] = useState(false);
+  
+  // Estados para nueva solicitud
+  const [nombreArticulo, setNombreArticulo] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [cliente, setCliente] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [observaciones, setObservaciones] = useState("");
 
-  const fetchReporte = async () => {
-    setLoading(true)
+  const fetchSolicitudes = async () => {
+    setLoadingSolicitudes(true);
     try {
-      const data = await obtenerReporteGeneral(fechaInicio || undefined, fechaFin || undefined)
-      setReporte(data)
+      const res = await obtenerSolicitudesArticulos();
+      setSolicitudes(res.data || []);
     } catch (error) {
-      console.error("Error obteniendo reporte:", error)
-      setReporte(null)
+      console.error("Error obteniendo solicitudes:", error);
+      setSolicitudes([]);
     } finally {
-      setLoading(false)
+      setLoadingSolicitudes(false);
     }
-  }
+  };
+
+  const crearSolicitud = async () => {
+    if (!nombreArticulo || !cliente) {
+      alert("Nombre del artículo y cliente son requeridos");
+      return;
+    }
+
+    try {
+      await agregarSolicitudArticulo({
+        nombre: nombreArticulo,
+        descripcion,
+        cliente,
+        telefono,
+        observaciones
+      });
+
+      // Limpiar formulario
+      setNombreArticulo("");
+      setDescripcion("");
+      setCliente("");
+      setTelefono("");
+      setObservaciones("");
+      setShowModalSolicitud(false);
+
+      // Recargar solicitudes
+      fetchSolicitudes();
+      
+      alert("Solicitud agregada exitosamente");
+    } catch (error) {
+      console.error("Error creando solicitud:", error);
+      alert("Error al crear la solicitud");
+    }
+  };
+
+  const cambiarEstadoSolicitud = async (id: string, nuevoEstado: string) => {
+    try {
+      await actualizarEstadoSolicitud(id, nuevoEstado);
+      fetchSolicitudes(); // Recargar solicitudes
+      alert("Estado actualizado exitosamente");
+    } catch (error) {
+      console.error("Error actualizando estado:", error);
+      alert("Error al actualizar el estado");
+    }
+  };
 
   useEffect(() => {
-    fetchReporte();
-    setLoadingNoVendidos(true);
-    obtenerArticulosNoVendidos().then(res => {
-      setArticulosNoVendidos(res.data || []);
-      setLoadingNoVendidos(false);
-    }).catch(() => setLoadingNoVendidos(false));
+    const loadData = async () => {
+      // Cargar reportes y artículos no vendidos (dependen de fechas)
+      setLoading(true);
+      setLoadingNoVendidos(true);
+      
+      try {
+        const [reporteData, articulosData] = await Promise.all([
+          obtenerReporteGeneral(fechaInicio || undefined, fechaFin || undefined),
+          obtenerArticulosNoVendidos(fechaInicio || undefined, fechaFin || undefined)
+        ]);
+        
+        setReporte(reporteData);
+        setArticulosNoVendidos(articulosData.data || []);
+      } catch (error) {
+        console.error("Error cargando datos:", error);
+        setReporte(null);
+        setArticulosNoVendidos([]);
+      } finally {
+        setLoading(false);
+        setLoadingNoVendidos(false);
+      }
+    };
+
+    loadData();
   }, [fechaInicio, fechaFin]);
+
+  useEffect(() => {
+    // Cargar solicitudes (no depende de fechas)
+    const loadSolicitudes = async () => {
+      setLoadingSolicitudes(true);
+      try {
+        const res = await obtenerSolicitudesArticulos();
+        setSolicitudes(res.data || []);
+      } catch (error) {
+        console.error("Error obteniendo solicitudes:", error);
+        setSolicitudes([]);
+      } finally {
+        setLoadingSolicitudes(false);
+      }
+    };
+
+    loadSolicitudes();
+  }, []);
 
   // exportar a pdf
   const exportarPDF = () => {
@@ -321,14 +412,28 @@ export default function ReportesPage() {
 
       {/* Apartado de artículos no vendidos */}
       <div className="bg-card rounded-xl shadow-app border border-app p-6 mb-8 mt-8">
-        <h2 className="text-xl font-bold mb-4 text-card">Artículos no vendidos</h2>
+        <h2 className="text-xl font-bold mb-4 text-card">
+          Artículos no vendidos
+          {(fechaInicio || fechaFin) && (
+            <span className="text-sm font-normal text-muted ml-2">
+              {fechaInicio && fechaFin ? `(${fechaInicio} a ${fechaFin})` : 
+               fechaInicio ? `(desde ${fechaInicio})` : 
+               `(hasta ${fechaFin})`}
+            </span>
+          )}
+        </h2>
         {loadingNoVendidos ? (
           <div className="text-gray-500">Cargando...</div>
         ) : articulosNoVendidos.length === 0 ? (
-          <div className="text-green-600">Todos los artículos han tenido al menos una venta.</div>
+          <div className="text-green-600">
+            {(fechaInicio || fechaFin) ? 
+              "Todos los artículos han tenido al menos una venta en el período seleccionado." :
+              "Todos los artículos han tenido al menos una venta."
+            }
+          </div>
         ) : (
           <div className="space-y-3">
-            {articulosNoVendidos.map((art: any) => (
+            {articulosNoVendidos.map((art) => (
               <div key={art._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium">{art.nombre}</p>
@@ -339,6 +444,113 @@ export default function ReportesPage() {
                 <p className="font-semibold text-gray-800">
                   Stock: {art.stock}
                 </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Sección de artículos solicitados */}
+      <div className="bg-card rounded-xl shadow-app border border-app p-6 mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-card">Artículos Solicitados</h2>
+          <button
+            onClick={() => setShowModalSolicitud(true)}
+            className="bg-primary text-white px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition flex items-center gap-2 shadow"
+          >
+            <span className="material-icons text-sm">add</span>
+            Nueva Solicitud
+          </button>
+        </div>
+        
+        {loadingSolicitudes ? (
+          <div className="text-gray-500">Cargando solicitudes...</div>
+        ) : solicitudes.length === 0 ? (
+          <div className="text-center py-8 text-muted">
+            <span className="material-icons text-4xl mb-2">inbox</span>
+            <p>No hay solicitudes de artículos</p>
+            <p className="text-sm">Agrega una nueva solicitud usando el botón de arriba</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {solicitudes.map((solicitud) => (
+              <div key={solicitud._id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg">{solicitud.nombre}</h3>
+                    {solicitud.descripcion && (
+                      <p className="text-gray-600 text-sm mb-2">{solicitud.descripcion}</p>
+                    )}
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <p><span className="font-medium">Cliente:</span> {solicitud.cliente}</p>
+                      {solicitud.telefono && (
+                        <p><span className="font-medium">Teléfono:</span> {solicitud.telefono}</p>
+                      )}
+                      <p><span className="font-medium">Fecha:</span> {new Date(solicitud.fecha || '').toLocaleDateString('es-ES')}</p>
+                      <p><span className="font-medium">Estado:</span> 
+                        <span className={`ml-1 px-2 py-1 rounded-full text-xs font-medium ${
+                          solicitud.estado === 'completada' ? 'bg-green-100 text-green-800' :
+                          solicitud.estado === 'en_proceso' ? 'bg-blue-100 text-blue-800' :
+                          solicitud.estado === 'cancelada' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {solicitud.estado === 'en_proceso' ? 'En Proceso' : 
+                           solicitud.estado === 'completada' ? 'Completada' :
+                           solicitud.estado === 'cancelada' ? 'Cancelada' : 'Pendiente'}
+                        </span>
+                      </p>
+                    </div>
+                    {solicitud.observaciones && (
+                      <p className="text-gray-600 text-sm mt-2">
+                        <span className="font-medium">Observaciones:</span> {solicitud.observaciones}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 ml-4 items-end">
+                    <select
+                      value={solicitud.estado}
+                      onChange={(e) => cambiarEstadoSolicitud(solicitud._id!, e.target.value)}
+                      className="px-2 py-1 border border-gray-300 rounded text-sm mb-2"
+                      title="Cambiar estado de solicitud"
+                    >
+                      <option value="pendiente">Pendiente</option>
+                      <option value="en_proceso">En Proceso</option>
+                      <option value="completada">Completada</option>
+                      <option value="cancelada">Cancelada</option>
+                    </select>
+                    <div className="flex gap-2">
+                      <button
+                        className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition"
+                        onClick={() => {
+                          setNombreArticulo(solicitud.nombre);
+                          setDescripcion(solicitud.descripcion || "");
+                          setCliente(solicitud.cliente);
+                          setTelefono(solicitud.telefono || "");
+                          setObservaciones(solicitud.observaciones || "");
+                          setShowModalSolicitud(true);
+                          // Aquí podrías agregar un estado para saber si es edición
+                        }}
+                        title="Editar"
+                      >
+                        <span className="material-icons text-sm">edit</span>
+                      </button>
+                      <button
+                        className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded hover:bg-red-200 transition"
+                        onClick={async () => {
+                          if (window.confirm('¿Eliminar esta solicitud?')) {
+                            // Aquí deberías llamar a una función para eliminar la solicitud
+                            // await eliminarSolicitudArticulo(solicitud._id!);
+                            // fetchSolicitudes();
+                            alert('Funcionalidad de eliminar aún no implementada');
+                          }
+                        }}
+                        title="Eliminar"
+                      >
+                        <span className="material-icons text-sm">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -375,6 +587,40 @@ export default function ReportesPage() {
           </div>
         </div>
       )}
+
+      {/* Modal para nueva solicitud */}
+      <Modal open={showModalSolicitud} onClose={() => setShowModalSolicitud(false)} title="Nueva Solicitud de Artículo" maxWidth="400px">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre del Artículo *
+            </label>
+            <input
+              type="text"
+              value={nombreArticulo}
+              onChange={(e) => setNombreArticulo(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Nombre del producto solicitado"
+              required
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              onClick={() => setShowModalSolicitud(false)}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={crearSolicitud}
+              disabled={!nombreArticulo}
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              Crear Solicitud
+            </button>
+          </div>
+        </div>
+      </Modal>
     </main>
   )
 } 

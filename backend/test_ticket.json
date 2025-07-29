@@ -1,0 +1,16 @@
+{
+  "phoneNumber": "5218115551234",
+  "ticketData": {
+    "cliente": "Cliente Prueba",
+    "productos": [
+      {
+        "nombre": "Producto Test",
+        "cantidad": 1,
+        "precio": 100
+      }
+    ],
+    "total": 100,
+    "metodoPago": "Efectivo",
+    "fecha": "2025-07-29T18:39:20.767Z"
+  }
+}

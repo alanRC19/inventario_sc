@@ -16,6 +16,27 @@ type Venta = {
   }>;
 };
 
+type Articulo = {
+  _id: string;
+  nombre: string;
+  stock: number;
+  precioUnitario?: number;
+  categoria: string;
+};
+
+type Entrada = {
+  _id: string;
+  cantidad: number;
+  fecha: string;
+  observaciones?: string;
+  articulo?: {
+    _id: string;
+    nombre: string;
+    precioUnitario?: number;
+    precioCompra?: number;
+  };
+};
+
 export default function UserDashboard() {
   const { usuario } = useAuth();
   const router = useRouter();
@@ -32,32 +53,38 @@ export default function UserDashboard() {
     const fetchDashboardData = async () => {
       try {
         setIsLoading(true);
-        const [ventasRes, inventarioRes, entradasRes] = await Promise.all([
-          fetch('http://localhost:3001/api/ventas?limit=5'),
-          fetch('http://localhost:3001/api/articulos?stock_bajo=true'),
-          fetch('http://localhost:3001/api/entradas?limit=100')
+        const [ventasRes, articulosRes, entradasRes] = await Promise.all([
+          fetch('http://localhost:3001/api/ventas?limit=100'),
+          fetch('http://localhost:3001/api/articulos?limit=1000'),
+          fetch('http://localhost:3001/api/entradas?limit=1000')
         ]);
 
         const ventasData = await ventasRes.json();
-        const inventarioData = await inventarioRes.json();
+        const articulosData = await articulosRes.json();
         const entradasData = await entradasRes.json();
 
         // Contar ventas de hoy
         const hoy = new Date().toISOString().split('T')[0];
-        const ventasHoy = ventasData.data.filter(
+        const todasLasVentas = ventasData.data || [];
+        const ventasHoyCount = todasLasVentas.filter(
           (venta: Venta) => venta.fecha.startsWith(hoy)
         ).length;
+
+        // Calcular artículos con stock bajo (menos de 5)
+        const articulos = articulosData.data || [];
+        const articulosStockBajo = articulos.filter((art: Articulo) => art.stock < 5 && art.stock > 0).length;
 
         // Calcular datos de entradas
         const entradas = entradasData.data || [];
         const totalEntradas = entradas.length;
-        const montoTotalEntradas = entradas.reduce((acc: number, entrada: { precioTotal?: number }) => 
-          acc + (entrada.precioTotal || 0), 0
-        );
+        const montoTotalEntradas = entradas.reduce((acc: number, entrada: Entrada) => {
+          const precioUnitario = entrada.articulo?.precioCompra || entrada.articulo?.precioUnitario || 0;
+          return acc + (precioUnitario * entrada.cantidad);
+        }, 0);
 
-        setVentasHoy(ventasHoy);
-        setUltimasVentas(ventasData.data.slice(0, 5));
-        setInventarioBajo(inventarioData.data.length);
+        setVentasHoy(ventasHoyCount);
+        setUltimasVentas(todasLasVentas.slice(0, 5));
+        setInventarioBajo(articulosStockBajo);
         setTotalEntradas(totalEntradas);
         setMontoEntradas(montoTotalEntradas);
       } catch (error) {

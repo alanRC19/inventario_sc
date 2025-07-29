@@ -1,0 +1,18 @@
+{
+  "phoneNumber": "1234567890",
+  "ticketData": {
+    "cliente": "Test Client",
+    "telefono": "1234567890",
+    "productos": [
+      {
+        "nombre": "Producto Test",
+        "cantidad": 1,
+        "precioUnitario": 10,
+        "subtotal": 10
+      }
+    ],
+    "total": 10,
+    "metodoPago": "efectivo",
+    "fecha": "2025-01-29"
+  }
+}

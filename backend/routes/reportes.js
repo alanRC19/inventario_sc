@@ -179,13 +179,28 @@ router.get('/estadisticas', async (req, res) => {
 
 // GET artículos no vendidos
 router.get('/no-vendidos', async (req, res) => {
+  const fechaInicio = req.query.fechaInicio || ""
+  const fechaFin = req.query.fechaFin || ""
+  
   try {
     const db = getDB();
     const articulosCollection = db.collection('articulos');
     const ventasCollection = db.collection('ventas');
 
-    // Obtener todos los IDs de artículos vendidos
-    const ventas = await ventasCollection.find({}).toArray();
+    // Construir filtro de fechas para ventas
+    let filterVentas = {}
+    if (fechaInicio || fechaFin) {
+      filterVentas.fecha = {}
+      if (fechaInicio) {
+        filterVentas.fecha.$gte = new Date(fechaInicio + 'T00:00:00.000Z')
+      }
+      if (fechaFin) {
+        filterVentas.fecha.$lte = new Date(fechaFin + 'T23:59:59.999Z')
+      }
+    }
+
+    // Obtener todos los IDs de artículos vendidos en el período
+    const ventas = await ventasCollection.find(filterVentas).toArray();
     const vendidosSet = new Set();
     ventas.forEach(venta => {
       (venta.productos || []).forEach(producto => {
@@ -201,6 +216,88 @@ router.get('/no-vendidos', async (req, res) => {
   } catch (error) {
     console.error('Error obteniendo artículos no vendidos:', error);
     res.status(500).json({ error: 'Error obteniendo artículos no vendidos' });
+  }
+});
+
+// POST agregar artículo solicitado
+router.post('/solicitudes', async (req, res) => {
+  try {
+    const { nombre, descripcion, cliente, telefono, observaciones } = req.body;
+    
+    if (!nombre || !cliente) {
+      return res.status(400).json({ error: 'Nombre del artículo y cliente son requeridos' });
+    }
+
+    const db = getDB();
+    const solicitudesCollection = db.collection('solicitudes');
+
+    const nuevaSolicitud = {
+      nombre,
+      descripcion: descripcion || '',
+      cliente,
+      telefono: telefono || '',
+      observaciones: observaciones || '',
+      fecha: new Date(),
+      estado: 'pendiente' // pendiente, en_proceso, completada, cancelada
+    };
+
+    const result = await solicitudesCollection.insertOne(nuevaSolicitud);
+
+    res.status(201).json({
+      message: 'Solicitud agregada exitosamente',
+      data: { _id: result.insertedId, ...nuevaSolicitud }
+    });
+  } catch (error) {
+    console.error('Error agregando solicitud:', error);
+    res.status(500).json({ error: 'Error agregando solicitud' });
+  }
+});
+
+// GET obtener solicitudes
+router.get('/solicitudes', async (req, res) => {
+  try {
+    const db = getDB();
+    const solicitudesCollection = db.collection('solicitudes');
+
+    const solicitudes = await solicitudesCollection
+      .find({})
+      .sort({ fecha: -1 })
+      .toArray();
+
+    res.json({ data: solicitudes, total: solicitudes.length });
+  } catch (error) {
+    console.error('Error obteniendo solicitudes:', error);
+    res.status(500).json({ error: 'Error obteniendo solicitudes' });
+  }
+});
+
+// PUT actualizar estado de solicitud
+router.put('/solicitudes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado } = req.body;
+
+    if (!['pendiente', 'en_proceso', 'completada', 'cancelada'].includes(estado)) {
+      return res.status(400).json({ error: 'Estado inválido' });
+    }
+
+    const db = getDB();
+    const solicitudesCollection = db.collection('solicitudes');
+    const { ObjectId } = require('mongodb');
+
+    const result = await solicitudesCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { estado, fechaActualizacion: new Date() } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Solicitud no encontrada' });
+    }
+
+    res.json({ message: 'Estado actualizado exitosamente' });
+  } catch (error) {
+    console.error('Error actualizando solicitud:', error);
+    res.status(500).json({ error: 'Error actualizando solicitud' });
   }
 });
 
