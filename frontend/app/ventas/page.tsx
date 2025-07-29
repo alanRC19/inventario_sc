@@ -1,11 +1,13 @@
 "use client"
 import { useEffect, useState, useRef } from "react"
 import { Venta, VentasPaginadas, ProductoVenta } from "@/domain/ventas/venta.types"
-import { fetchVentas, agregarVenta as agregarVentaService, eliminarVenta as eliminarVentaService, editarVenta as editarVentaService, VentasPaginadasConTotal } from "@/domain/ventas/venta.service"
+import { fetchVentas, agregarVenta as agregarVentaService, eliminarVenta as eliminarVentaService, editarVenta as editarVentaService, cancelarVenta as cancelarVentaService, VentasPaginadasConTotal } from "@/domain/ventas/venta.service"
 import { Table, TableColumn } from "@/shared/components/Table"
 import { Modal } from "@/shared/components/Modal"
 import { SearchBar } from "@/shared/components/SearchBar"
 import { DateRangeFilter } from "@/shared/components/DateRangeFilter"
+import { VentaStatusBadge } from "@/shared/components/VentaStatusBadge"
+import { useAuth } from "@/shared/utils/useAuth"
 
 type Articulo = {
   _id: string
@@ -15,6 +17,7 @@ type Articulo = {
 }
 
 export default function VentasPage() {
+  const { usuario } = useAuth()
   const [ventas, setVentas] = useState<Venta[]>([])
   const [cliente, setCliente] = useState("")
   const [productosSeleccionados, setProductosSeleccionados] = useState<ProductoVenta[]>([])
@@ -40,6 +43,9 @@ export default function VentasPage() {
   const [editMetodoPago, setEditMetodoPago] = useState<'efectivo' | 'tarjeta' | 'transferencia'>('efectivo')
   const [showEditModal, setShowEditModal] = useState(false)
   const [totalVendido, setTotalVendido] = useState(0)
+
+  // Verificar si el usuario es admin
+  const isAdmin = usuario?.rol === 'admin'
 
   const fetchVentasData = async (pageToFetch = page, search = searchTerm, inicio = fechaInicio, fin = fechaFin) => {
     setLoading(true)
@@ -132,6 +138,49 @@ export default function VentasPage() {
     fetchVentasData()
   }
 
+  const cancelarVenta = async (id: string) => {
+    if (!confirm("¿Seguro que deseas cancelar esta venta? Esta acción restaurará el stock de los productos.")) return
+    try {
+      console.log("Cancelando venta con ID:", id)
+      
+      // Encontrar la venta antes de cancelarla
+      const ventaCancelada = ventas.find(v => v._id === id)
+      if (!ventaCancelada) {
+        alert("No se pudo encontrar la venta")
+        return
+      }
+      
+      // Solo restar si la venta no estaba ya cancelada
+      const debeRestarDelTotal = ventaCancelada.estado !== 'cancelada'
+      
+      await cancelarVentaService(id)
+      console.log("Venta cancelada en el backend, actualizando UI...")
+      
+      // Actualizar estado local inmediatamente
+      setVentas(prevVentas => 
+        prevVentas.map(venta => 
+          venta._id === id 
+            ? { ...venta, estado: 'cancelada', fechaCancelacion: new Date().toISOString() }
+            : venta
+        )
+      )
+      
+      // Actualizar el total vendido restando esta venta solo si no estaba ya cancelada
+      if (debeRestarDelTotal) {
+        console.log("Restando del total:", ventaCancelada.total)
+        setTotalVendido(prev => prev - ventaCancelada.total)
+      } else {
+        console.log("Venta ya estaba cancelada, no se resta del total")
+      }
+      
+      alert("Venta cancelada correctamente")
+      console.log("Cancelación completada")
+    } catch (error) {
+      console.error("Error al cancelar venta:", error)
+      alert("Error al cancelar la venta")
+    }
+  }
+
   const iniciarEdicion = (venta: Venta) => {
     setEditId(venta._id)
     setEditCliente(venta.cliente)
@@ -217,6 +266,7 @@ export default function VentasPage() {
     { key: "productos", label: "Productos" },
     { key: "total", label: "Total" },
     { key: "metodoPago", label: "Método de Pago" },
+    { key: "estado", label: "Estado" },
     { key: "acciones", label: "Acciones" },
   ]
 
@@ -225,6 +275,7 @@ export default function VentasPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 text-card">Ventas</h1>
         <p className="text-muted">Registro y consulta de ventas</p>
+        
         {/* Resumen de ventas */}
         <div className="mt-4 bg-card rounded-lg shadow-app p-4 flex flex-col items-start border border-app">
           <span className="text-xl font-semibold text-card">
@@ -303,7 +354,9 @@ export default function VentasPage() {
         columns={columns}
         data={ventas || []}
         renderRow={(venta) => (
-          <tr key={venta._id} className="border-b border-[#ececec] hover:bg-[#f3f4f6] transition">
+          <tr key={venta._id} className={`border-b border-[#ececec] hover:bg-[#f3f4f6] transition ${
+            venta.estado === 'cancelada' ? 'bg-red-50 opacity-70' : ''
+          }`}>
             <td className="p-4">
               {new Date(venta.fecha).toLocaleDateString('es-ES', {
                 year: 'numeric',
@@ -329,22 +382,47 @@ export default function VentasPage() {
             <td className="p-4">
               <span className="capitalize">{venta.metodoPago}</span>
             </td>
-                              <td className="p-4 flex gap-2">
-                    <button
-                      className="p-1 rounded hover:bg-[#f3f4f6]"
-                      title="Editar"
-                      onClick={() => iniciarEdicion(venta)}
-                    >
-                      <span className="material-icons text-base">edit</span>
-                    </button>
-                    <button
-                      className="p-1 rounded hover:bg-[#f3f4f6] text-red-600"
-                      title="Eliminar"
-                      onClick={() => eliminarVenta(venta._id)}
-                    >
-                      <span className="material-icons text-base">delete</span>
-                    </button>
-                  </td>
+            <td className="p-4">
+              <VentaStatusBadge estado={venta.estado} />
+            </td>
+            <td className="p-4 flex gap-2">
+              {/* Botón Editar - disponible para todos */}
+              <button
+                className={`p-1 rounded hover:bg-[#f3f4f6] ${
+                  venta.estado === 'cancelada' ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                title="Editar"
+                onClick={() => venta.estado !== 'cancelada' && iniciarEdicion(venta)}
+                disabled={venta.estado === 'cancelada'}
+              >
+                <span className="material-icons text-base">edit</span>
+              </button>
+              
+              {/* Botón Eliminar - solo para administradores */}
+              {isAdmin && (
+                <button
+                  className={`p-1 rounded hover:bg-[#f3f4f6] text-red-600 ${
+                    venta.estado === 'cancelada' ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  title="Eliminar"
+                  onClick={() => venta.estado !== 'cancelada' && eliminarVenta(venta._id)}
+                  disabled={venta.estado === 'cancelada'}
+                >
+                  <span className="material-icons text-base">delete</span>
+                </button>
+              )}
+              
+              {/* Botón Cancelar - solo para administradores */}
+              {isAdmin && venta.estado === 'completada' && (
+                <button
+                  className="p-1 rounded hover:bg-[#f3f4f6] text-orange-600"
+                  title="Cancelar venta"
+                  onClick={() => cancelarVenta(venta._id)}
+                >
+                  <span className="material-icons text-base">cancel</span>
+                </button>
+              )}
+            </td>
           </tr>
         )}
       />

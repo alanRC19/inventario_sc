@@ -7,6 +7,8 @@ export interface EstadisticasGenerales {
   valorInventario: number;
   articulosStockBajo: number;
   articulosSinStock: number;
+  totalEntradas: number;
+  valorTotalEntradas: number;
 }
 
 export interface VentaPorPeriodo {
@@ -37,7 +39,16 @@ export interface ReporteMensual {
 export interface ReporteDetallado {
   estadisticasGenerales: EstadisticasGenerales;
   ventasPorPeriodo: VentaPorPeriodo[];
+  entradasPorPeriodo: VentaPorPeriodo[];
   productosMasVendidos: ProductoMasVendido[];
   clientesMasFrecuentes: ClienteMasFrecuente[];
   reporteMensual: ReporteMensual[];
+}
+
+export interface ActividadReciente {
+  icon: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  status: 'success' | 'info' | 'warning' | 'error';
 } 

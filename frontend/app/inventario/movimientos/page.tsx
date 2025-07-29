@@ -5,7 +5,7 @@ import { fetchArticulos } from '@/domain/inventario/inventario.service';
 import { Table, TableColumn } from '@/shared/components/Table';
 import { SearchBar } from '@/shared/components/SearchBar';
 import { StatusBadge } from '@/shared/components/StatusBadge';
-import { formatDate } from '@/shared/utils/formatters';
+import { formatDate, formatCurrency } from '@/shared/utils/formatters';
 import { EntradaDetailModal } from '@/shared/components/EntradaDetailModal';
 import { getEntradas } from '@/domain/entradas/entrada.service';
 import { Entrada } from '@/domain/entradas/entrada.types';
@@ -117,31 +117,33 @@ export default function MovimientosPage() {
     { key: 'tipo', label: 'Tipo' },
     { key: 'articulo', label: 'Artículo' },
     { key: 'cantidad', label: 'Cantidad' },
+    { key: 'precioVenta', label: 'Precio Venta' },
+    { key: 'precioCompra', label: 'Precio Compra' },
     { key: 'stockAntes', label: 'Stock Anterior' },
     { key: 'stockDespues', label: 'Stock Actual' },
     { key: 'usuario', label: 'Usuario' },
     { key: 'referencia', label: 'Referencia' },
   ];
 
-  const renderRow = (mov: Movimiento, index: number, onClick?: () => void) => {
+  const renderRow = (mov: Movimiento) => {
     const articulo = articulos.find(a => a._id === mov.articuloId);
-    
     return (
-      <tr 
-        key={mov._id} 
+      <tr
+        key={mov._id}
         className="hover:bg-gray-50 transition-colors cursor-pointer"
-        onClick={onClick}
+        onClick={() => handleRowClick(mov)}
       >
         <td className="px-6 py-4">{formatDate(new Date(mov.fecha))}</td>
         <td className="px-6 py-4">
-          <StatusBadge
-            variant={
-              mov.tipo === 'entrada' ? 'success' :
-              mov.tipo === 'salida' ? 'error' :
-              mov.tipo === 'ajuste' ? 'warning' : 'info'
-            }
-            text={mov.tipo}
-          />
+          <span className={`px-2 py-1 rounded-full text-xs font-medium
+            ${mov.tipo === 'entrada' ? 'bg-green-100 text-green-800' :
+              mov.tipo === 'salida' ? 'bg-red-100 text-red-800' :
+              mov.tipo === 'venta' ? 'bg-purple-100 text-purple-800' :
+              mov.tipo === 'cancelacion' ? 'bg-orange-100 text-orange-800' :
+              mov.tipo === 'ajuste' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}
+          >
+            {mov.tipo}
+          </span>
         </td>
         <td className="px-6 py-4">
           <div className="flex items-center">
@@ -149,6 +151,8 @@ export default function MovimientosPage() {
           </div>
         </td>
         <td className="px-6 py-4">{mov.cantidad}</td>
+        <td className="px-6 py-4">{articulo ? formatCurrency(articulo.precioVenta) : '-'}</td>
+        <td className="px-6 py-4">{articulo ? formatCurrency(articulo.precioCompra) : '-'}</td>
         <td className="px-6 py-4">{mov.stockAntes}</td>
         <td className="px-6 py-4">{mov.stockDespues}</td>
         <td className="px-6 py-4">{mov.usuarioNombre || 'Sistema'}</td>
@@ -179,6 +183,8 @@ export default function MovimientosPage() {
           >
             <option value="">Todos los tipos</option>
             <option value="entrada">Entradas</option>
+            <option value="venta">Ventas</option>
+            <option value="cancelacion">Cancelaciones</option>
             <option value="ajuste">Ajustes</option>
             <option value="salida">Salidas</option>
             <option value="creacion">Creación</option>
@@ -201,7 +207,6 @@ export default function MovimientosPage() {
               columns={columns}
               data={movimientos}
               renderRow={renderRow}
-              onRowClick={handleRowClick}
             />
 
             <div className="flex items-center justify-between px-6 py-4 bg-gray-50">

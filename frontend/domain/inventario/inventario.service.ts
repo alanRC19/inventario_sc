@@ -3,6 +3,7 @@
 import { Articulo, ArticulosPaginados } from './inventario.types';
 
 const API_URL = 'http://localhost:3001/api/articulos';
+const ENTRADAS_API_URL = 'http://localhost:3001/api/entradas';
 
 export async function fetchArticulos(page = 1, limit = 6, search = ""): Promise<ArticulosPaginados> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
@@ -41,6 +42,35 @@ export async function editarArticulo(id: string, data: Partial<Omit<Articulo, '_
     },
     body: JSON.stringify(data),
   });
+}
+
+// Función para agregar entrada al inventario
+export async function agregarEntrada(entradaData: {
+  articuloId: string;
+  cantidad: number;
+  proveedorId: string;
+}) {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  
+  const response = await fetch(ENTRADAS_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify({
+      articuloId: entradaData.articuloId,
+      cantidad: entradaData.cantidad,
+      proveedorId: entradaData.proveedorId
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Error al agregar entrada');
+  }
+
+  return response.json();
 }
 
 // Puedes agregar aquí funciones para agregar, editar, eliminar, etc. 

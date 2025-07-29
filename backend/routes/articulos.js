@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router()
+const { ObjectId } = require('mongodb')
 const { getDB } = require('../db')
 const requireAuth = require('./usuarios').requireAuth;
 
@@ -111,27 +112,142 @@ router.delete('/:id', requireAuth, async (req, res) => {
 
 // GET historial de movimientos
 router.get('/movimientos', requireAuth, async (req, res) => {
-  const db = getDB();
-  const { articuloId } = req.query;
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 6;
-  const skip = (page - 1) * limit;
-  const filter = articuloId ? { articuloId: articuloId } : {};
+  try {
+    const db = getDB();
+    const { articuloId, tipo, busqueda } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Construir filtro base
+    let filter = {};
+    
+    // Filtrar por artículo específico
+    if (articuloId) {
+      filter.articuloId = new ObjectId(articuloId);
+    }
+    
+    // Filtrar por tipo de movimiento
+    if (tipo) {
+      filter.tipo = tipo;
+    }
+    
+    // Para búsqueda, necesitamos usar agregación para buscar en campos relacionados
+    let pipeline = [];
+    
+    if (busqueda) {
+      // Pipeline de agregación para búsqueda
+      pipeline = [
+        {
+          $lookup: {
+            from: 'articulos',
+            localField: 'articuloId',
+            foreignField: '_id',
+            as: 'articulo'
+          }
+        },
+        {
+          $lookup: {
+            from: 'usuarios',
+            localField: 'usuarioId',
+            foreignField: '_id',
+            as: 'usuario'
+          }
+        },
+        {
+          $addFields: {
+            articuloNombre: { $arrayElemAt: ['$articulo.nombre', 0] },
+            usuarioNombre: { $arrayElemAt: ['$usuario.nombre', 0] }
+          }
+        },
+        {
+          $match: {
+            ...filter,
+            $or: [
+              { articuloNombre: { $regex: busqueda, $options: 'i' } },
+              { usuarioNombre: { $regex: busqueda, $options: 'i' } },
+              { referencia: { $regex: busqueda, $options: 'i' } },
+              { motivo: { $regex: busqueda, $options: 'i' } }
+            ]
+          }
+        },
+        { $sort: { fecha: -1 } },
+        { $skip: skip },
+        { $limit: limit }
+      ];
+      
+      // Contar total con búsqueda
+      const countPipeline = [
+        {
+          $lookup: {
+            from: 'articulos',
+            localField: 'articuloId',
+            foreignField: '_id',
+            as: 'articulo'
+          }
+        },
+        {
+          $lookup: {
+            from: 'usuarios',
+            localField: 'usuarioId',
+            foreignField: '_id',
+            as: 'usuario'
+          }
+        },
+        {
+          $addFields: {
+            articuloNombre: { $arrayElemAt: ['$articulo.nombre', 0] },
+            usuarioNombre: { $arrayElemAt: ['$usuario.nombre', 0] }
+          }
+        },
+        {
+          $match: {
+            ...filter,
+            $or: [
+              { articuloNombre: { $regex: busqueda, $options: 'i' } },
+              { usuarioNombre: { $regex: busqueda, $options: 'i' } },
+              { referencia: { $regex: busqueda, $options: 'i' } },
+              { motivo: { $regex: busqueda, $options: 'i' } }
+            ]
+          }
+        },
+        { $count: 'total' }
+      ];
+      
+      const [movimientos, totalResult] = await Promise.all([
+        db.collection('movimientos_inventario').aggregate(pipeline).toArray(),
+        db.collection('movimientos_inventario').aggregate(countPipeline).toArray()
+      ]);
+      
+      const total = totalResult.length > 0 ? totalResult[0].total : 0;
+      
+      res.json({
+        data: movimientos,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit)
+      });
+    } else {
+      // Sin búsqueda, usar find simple
+      const total = await db.collection('movimientos_inventario').countDocuments(filter);
+      const movimientos = await db.collection('movimientos_inventario')
+        .find(filter)
+        .sort({ fecha: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
 
-  const total = await db.collection('movimientos_inventario').countDocuments(filter);
-  const movimientos = await db.collection('movimientos_inventario')
-    .find(filter)
-    .sort({ fecha: -1 })
-    .skip(skip)
-    .limit(limit)
-    .toArray();
-
-  res.json({
-    data: movimientos,
-    total,
-    page,
-    totalPages: Math.ceil(total / limit)
-  });
+      res.json({
+        data: movimientos,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit)
+      });
+    }
+  } catch (error) {
+    console.error('Error al obtener movimientos:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
 module.exports = router
