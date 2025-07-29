@@ -1,27 +1,31 @@
 "use client"
 import { useEffect, useState, useRef } from "react"
 import { Articulo, ArticulosPaginados } from "@/domain/inventario/inventario.types"
-import { fetchArticulos, agregarArticulo as agregarArticuloService, eliminarArticulo as eliminarArticuloService, editarArticulo as editarArticuloService } from "@/domain/inventario/inventario.service"
+import { fetchArticulos, agregarArticulo as agregarArticuloService, eliminarArticulo as eliminarArticuloService, editarArticulo as editarArticuloService, agregarEntrada } from "@/domain/inventario/inventario.service"
 import { Table, TableColumn } from "@/shared/components/Table"
 import { Modal } from "@/shared/components/Modal"
 import { SearchBar } from "@/shared/components/SearchBar"
 import { StatusBadge } from "@/shared/components/StatusBadge"
+import { EntradaModal, EntradaData } from "@/shared/components/EntradaModal"
 import { calculateStockStatus } from "@/shared/utils/stockUtils"
 
 export default function InventarioPage() {
   const [articulos, setArticulos] = useState<Articulo[]>([])
   const [nombre, setNombre] = useState("")
   const [stock, setStock] = useState("")
-  const [precioUnitario, setPrecioUnitario] = useState("")
+  const [precioVenta, setPrecioVenta] = useState("")
+  const [precioCompra, setPrecioCompra] = useState("")
   const [categoria, setCategoria] = useState("")
   const [proveedor, setProveedor] = useState("")
   const [editId, setEditId] = useState<string | null>(null)
   const [editNombre, setEditNombre] = useState("")
   const [editStock, setEditStock] = useState("")
-  const [editPrecioUnitario, setEditPrecioUnitario] = useState("")
+  const [editPrecioVenta, setEditPrecioVenta] = useState("")
+  const [editPrecioCompra, setEditPrecioCompra] = useState("")
   const [editCategoria, setEditCategoria] = useState("")
   const [editProveedor, setEditProveedor] = useState("")
   const [showModal, setShowModal] = useState(false)
+  const [showEntradaModal, setShowEntradaModal] = useState(false)
   const [modalMounted, setModalMounted] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const modalRef = useRef<HTMLDivElement>(null)
@@ -63,13 +67,15 @@ export default function InventarioPage() {
     await agregarArticuloService({
       nombre,
       stock: parseInt(stock),
-      precioUnitario: parseFloat(precioUnitario),
+      precioVenta: parseFloat(precioVenta),
+      precioCompra: parseFloat(precioCompra),
       categoria,
       proveedor,
     });
     setNombre("");
     setStock("");
-    setPrecioUnitario("");
+    setPrecioVenta("");
+    setPrecioCompra("");
     setCategoria("");
     setProveedor("");
     setShowModal(false);
@@ -86,7 +92,8 @@ export default function InventarioPage() {
     setEditId(articulo._id)
     setEditNombre(articulo.nombre)
     setEditStock(articulo.stock.toString())
-    setEditPrecioUnitario(articulo.precioUnitario?.toString() || "")
+    setEditPrecioVenta(articulo.precioVenta?.toString() || "")
+    setEditPrecioCompra(articulo.precioCompra?.toString() || "")
     setEditCategoria(articulo.categoria || "")
     setEditProveedor(articulo.proveedor || "")
   }
@@ -95,17 +102,31 @@ export default function InventarioPage() {
     await editarArticuloService(id, {
       nombre: editNombre,
       stock: parseInt(editStock),
-      precioUnitario: parseFloat(editPrecioUnitario),
+      precioVenta: parseFloat(editPrecioVenta),
+      precioCompra: parseFloat(editPrecioCompra),
       categoria: editCategoria,
       proveedor: editProveedor,
     });
     setEditId(null);
     setEditNombre("");
     setEditStock("");
-    setEditPrecioUnitario("");
+    setEditPrecioVenta("");
+    setEditPrecioCompra("");
     setEditCategoria("");
     setEditProveedor("");
     fetchArticulosData();
+  }
+
+  const handleAgregarEntrada = async (entradaData: EntradaData) => {
+    try {
+      await agregarEntrada(entradaData);
+      setShowEntradaModal(false);
+      fetchArticulosData(); // Recargar la lista para ver el stock actualizado
+      alert("Entrada agregada exitosamente. El stock ha sido actualizado.");
+    } catch (error) {
+      console.error("Error al agregar entrada:", error);
+      alert("Error al agregar la entrada. Por favor intenta de nuevo.");
+    }
   }
 
   // Animación de entrada del modal
@@ -127,7 +148,8 @@ export default function InventarioPage() {
   const columns: TableColumn[] = [
     { key: "nombre", label: "Nombre" },
     { key: "stock", label: "Stock" },
-    { key: "precioUnitario", label: "Precio unitario" },
+    { key: "precioVenta", label: "Precio Venta" },
+    { key: "precioCompra", label: "Precio Compra" },
     { key: "categoria", label: "Categoría" },
     { key: "proveedor", label: "Proveedor" },
     { key: "estado", label: "Estado" },
@@ -150,6 +172,13 @@ export default function InventarioPage() {
             <span className="material-icons text-lg">history</span>
             Ver historial de movimientos
           </a>
+          <button
+            onClick={() => setShowEntradaModal(true)}
+            className="bg-green-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2 shadow"
+          >
+            <span className="material-icons text-lg">add_box</span>
+            Agregar Entrada
+          </button>
           <button
             onClick={() => setShowModal(true)}
             className="bg-black text-white px-5 py-2 rounded-lg font-semibold hover:bg-gray-900 transition flex items-center gap-2 shadow"
@@ -203,8 +232,16 @@ export default function InventarioPage() {
                     <input
                       className="border border-[#ececec] p-2 rounded-lg w-full text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
                       type="number"
-                      value={editPrecioUnitario}
-                      onChange={e => setEditPrecioUnitario(e.target.value)}
+                      value={editPrecioVenta}
+                      onChange={e => setEditPrecioVenta(e.target.value)}
+                    />
+                  </td>
+                  <td className="p-4">
+                    <input
+                      className="border border-[#ececec] p-2 rounded-lg w-full text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
+                      type="number"
+                      value={editPrecioCompra}
+                      onChange={e => setEditPrecioCompra(e.target.value)}
                     />
                   </td>
                   <td className="p-4">
@@ -243,7 +280,8 @@ export default function InventarioPage() {
                 <>
                   <td className="p-4">{a.nombre}</td>
                   <td className="p-4">{a.stock}</td>
-                  <td className="p-4">${a.precioUnitario?.toFixed(2)}</td>
+                  <td className="p-4">${a.precioVenta?.toFixed(2)}</td>
+                  <td className="p-4">${a.precioCompra?.toFixed(2)}</td>
                   <td className="p-4">{a.categoria}</td>
                   <td className="p-4">{a.proveedor}</td>
                   <td className="p-4">
@@ -311,10 +349,17 @@ export default function InventarioPage() {
         />
         <input
           className="border border-[#ececec] p-2 rounded-lg w-full mb-4 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
-          placeholder="Precio unitario"
+          placeholder="Precio de venta"
           type="number"
-          value={precioUnitario}
-          onChange={e => setPrecioUnitario(e.target.value)}
+          value={precioVenta}
+          onChange={e => setPrecioVenta(e.target.value)}
+        />
+        <input
+          className="border border-[#ececec] p-2 rounded-lg w-full mb-4 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
+          placeholder="Precio de compra"
+          type="number"
+          value={precioCompra}
+          onChange={e => setPrecioCompra(e.target.value)}
         />
         <select
           className="border border-[#ececec] p-2 rounded-lg w-full mb-4 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
@@ -344,10 +389,18 @@ export default function InventarioPage() {
           <button
             className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition"
             onClick={agregarArticulo}
-            disabled={!nombre || !stock || !precioUnitario}
+            disabled={!nombre || !stock || !precioVenta || !precioCompra}
           >Agregar</button>
         </div>
       </Modal>
+
+      {/* Modal de agregar entrada */}
+      <EntradaModal
+        open={showEntradaModal}
+        onClose={() => setShowEntradaModal(false)}
+        onSubmit={handleAgregarEntrada}
+        articulos={articulos}
+      />
     </main>
   )
 } 

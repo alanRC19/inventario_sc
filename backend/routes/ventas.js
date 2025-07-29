@@ -1,6 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const { getDB } = require('../db')
+const usuariosRouter = require('./usuarios')
+const { requireAuth, requireAdmin } = usuariosRouter
 
 // Función para calcular el estado del stock
 function calculateStockStatus(stock) {
@@ -50,9 +52,11 @@ router.get('/', async (req, res) => {
 
   const total = await collection.countDocuments(filter)
   const ventas = await collection.find(filter).skip(skip).limit(limit).sort({ fecha: -1 }).toArray()
-  // Calcular el total vendido (suma de todos los totales de ventas que cumplen el filtro)
+  
+  // Calcular el total vendido (suma de todos los totales de ventas COMPLETADAS que cumplen el filtro)
+  const filterParaTotal = { ...filter, estado: { $ne: 'cancelada' } }
   const totalVendidoAgg = await collection.aggregate([
-    { $match: filter },
+    { $match: filterParaTotal },
     { $group: { _id: null, totalVendido: { $sum: "$total" } } }
   ]).toArray();
   const totalVendido = totalVendidoAgg[0]?.totalVendido || 0;
@@ -136,6 +140,11 @@ router.put('/:id', async (req, res) => {
     if (!ventaOriginal) {
       return res.status(404).json({ error: 'Venta no encontrada' })
     }
+    
+    // Verificar si la venta está cancelada
+    if (ventaOriginal.estado === 'cancelada') {
+      return res.status(400).json({ error: 'No se puede editar una venta cancelada' })
+    }
 
     // Restaurar stock de productos originales
     const articulosCollection = getDB().collection('articulos')
@@ -193,8 +202,8 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// DELETE eliminar venta
-router.delete('/:id', async (req, res) => {
+// DELETE eliminar venta - solo administradores
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   const { ObjectId } = require('mongodb')
   const collection = getDB().collection('ventas')
   
@@ -202,6 +211,11 @@ router.delete('/:id', async (req, res) => {
     const venta = await collection.findOne({ _id: new ObjectId(req.params.id) })
     if (!venta) {
       return res.status(404).json({ error: 'Venta no encontrada' })
+    }
+    
+    // Verificar si la venta está cancelada
+    if (venta.estado === 'cancelada') {
+      return res.status(400).json({ error: 'No se puede eliminar una venta cancelada' })
     }
 
     // Restaurar stock de productos
@@ -226,6 +240,71 @@ router.delete('/:id', async (req, res) => {
     await collection.deleteOne({ _id: new ObjectId(req.params.id) })
     res.json({ message: 'Venta eliminada correctamente' })
   } catch (error) {
+    res.status(400).json({ error: 'ID inválido' })
+  }
+})
+
+// PATCH /:id/cancelar - Cancelar una venta - solo administradores
+router.patch('/:id/cancelar', requireAuth, requireAdmin, async (req, res) => {
+  const { ObjectId } = require('mongodb')
+  
+  try {
+    const collection = getDB().collection('ventas')
+    const venta = await collection.findOne({ _id: new ObjectId(req.params.id) })
+    
+    if (!venta) {
+      return res.status(404).json({ error: 'Venta no encontrada' })
+    }
+    
+    if (venta.estado === 'cancelada') {
+      return res.status(400).json({ error: 'La venta ya está cancelada' })
+    }
+
+    // Restaurar stock de productos
+    const articulosCollection = getDB().collection('articulos')
+    for (const producto of venta.productos) {
+      // Obtener el artículo actual para calcular el nuevo stock
+      const articulo = await articulosCollection.findOne({ _id: new ObjectId(producto.articuloId) })
+      if (articulo) {
+        const nuevoStock = articulo.stock + producto.cantidad
+        const nuevoEstado = calculateStockStatus(nuevoStock)
+        
+        await articulosCollection.updateOne(
+          { _id: new ObjectId(producto.articuloId) },
+          { 
+            $inc: { stock: producto.cantidad },
+            $set: { estado: nuevoEstado }
+          }
+        )
+        
+        // Registrar movimiento de cancelación
+        await getDB().collection('movimientos_inventario').insertOne({
+          articuloId: new ObjectId(producto.articuloId),
+          tipo: 'cancelacion',
+          cantidad: producto.cantidad,
+          stockAntes: articulo.stock,
+          stockDespues: nuevoStock,
+          fecha: new Date(),
+          motivo: `Cancelación de venta - Cliente: ${venta.cliente}`,
+          referencia: req.params.id
+        })
+      }
+    }
+
+    // Actualizar estado de la venta a cancelada
+    await collection.updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { 
+        $set: { 
+          estado: 'cancelada',
+          fechaCancelacion: new Date()
+        }
+      }
+    )
+    
+    res.json({ message: 'Venta cancelada correctamente' })
+  } catch (error) {
+    console.error('Error al cancelar venta:', error)
     res.status(400).json({ error: 'ID inválido' })
   }
 })

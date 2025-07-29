@@ -82,9 +82,18 @@ export default function RootLayout({
     // Mientras no se sabe el rol, no mostrar nada (o solo un loader si se desea)
     filteredLinks = [];
   } else if (usuario && usuario.rol !== "admin") {
-    filteredLinks = SIDEBAR_LINKS.filter(link => ["/inventario", "/ventas"].includes(link.href));
+    // Para usuarios no admin: Dashboard específico, Inventario y Ventas
+    filteredLinks = [
+      { href: "/dashboard/usuario", icon: "dashboard", label: "Dashboard" },
+      { href: "/inventario", icon: "inventory_2", label: "Inventario" },
+      { href: "/ventas", icon: "point_of_sale", label: "Ventas" }
+    ];
   } else {
-    filteredLinks = SIDEBAR_LINKS;
+    // Para admin: Dashboard específico y todos los enlaces
+    filteredLinks = [
+      { href: "/dashboard/admin", icon: "dashboard", label: "Dashboard" },
+      ...SIDEBAR_LINKS.slice(1) // Todos excepto el primer dashboard genérico
+    ];
   }
 
   const pathname = usePathname();

@@ -5,6 +5,7 @@ const articulosRoutes = require('./routes/articulos')
 const categoriasRoutes = require('./routes/categorias')
 const proveedoresRoutes = require('./routes/proveedores')
 const ventasRoutes = require('./routes/ventas')
+const entradasRoutes = require('./routes/entradas')
 const reportesRoutes = require('./routes/reportes')
 const usuariosRouter = require('./routes/usuarios');
 require('dotenv').config()
@@ -25,6 +26,7 @@ app.use('/api/articulos', articulosRoutes)
 app.use('/api/categorias', categoriasRoutes)
 app.use('/api/proveedores', proveedoresRoutes)
 app.use('/api/ventas', ventasRoutes)
+app.use('/api/entradas', entradasRoutes)
 app.use('/api/reportes', reportesRoutes)
 app.use('/api/usuarios', usuariosRouter);
 
@@ -33,7 +35,8 @@ console.log('Rutas cargadas:', {
   articulos: !!articulosRoutes,
   categorias: !!categoriasRoutes,
   proveedores: !!proveedoresRoutes,
-  ventas: !!ventasRoutes
+  ventas: !!ventasRoutes,
+  entradas: !!entradasRoutes
 })
 
 connectDB().then(() => {
