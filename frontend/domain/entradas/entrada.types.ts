@@ -3,6 +3,7 @@ export interface Producto {
   nombre: string;
   cantidad: number;
   precioUnitario: number;
+  precioCompra?: number;
   subtotal: number;
   lote?: string;
   fechaCaducidad?: Date;
@@ -84,4 +85,12 @@ export interface EntradaFiltros {
   estado?: string;
   tipo?: string;
   busqueda?: string;
+}
+
+export interface EntradaArticulo {
+  articuloId: string;
+  nombre: string;
+  cantidad: number;
+  precioCompra: number;
+  subtotal: number;
 }

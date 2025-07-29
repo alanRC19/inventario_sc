@@ -33,4 +33,9 @@ export async function editarArticulo(id: string, data: Partial<Omit<Articulo, '_
   });
 }
 
+export async function obtenerProveedoresArticulo(id: string) {
+  const res = await fetch(`${API_URL}/${id}/proveedores`);
+  return res.json();
+}
+
 // Puedes agregar aquí funciones para agregar, editar, eliminar, etc. 

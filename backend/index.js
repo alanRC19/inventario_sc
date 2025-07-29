@@ -1,5 +1,7 @@
+require("dotenv").config()
 const express = require("express")
 const cors = require("cors")
+const mongoose = require("mongoose")
 const { connectToDatabase } = require("./db")
 const { initializeWhatsAppClient } = require("./whatsappClient")
 
@@ -20,6 +22,9 @@ const reportesRoutes = require("./routes/reportes")
 const ventasRoutes = require("./routes/ventas")
 const whatsappRoutes = require("./routes/whatsapp")
 const settingsRoutes = require("./routes/settings") // <--- NUEVA IMPORTACIÓN
+const authRoutes = require("./routes/auth") // <--- NUEVA IMPORTACIÓN PARA AUTH
+const usuariosRoutes = require("./routes/usuarios") // <--- NUEVA IMPORTACIÓN PARA USUARIOS
+const movimientosRoutes = require("./routes/movimientos") // <--- NUEVA IMPORTACIÓN PARA MOVIMIENTOS
 
 // Usar rutas
 app.use("/api/articulos", articulosRoutes)
@@ -29,6 +34,9 @@ app.use("/api/reportes", reportesRoutes)
 app.use("/api/ventas", ventasRoutes)
 app.use("/api/whatsapp", whatsappRoutes)
 app.use("/api/settings", settingsRoutes) // <--- NUEVA RUTA
+app.use("/api/auth", authRoutes) // <--- NUEVA RUTA PARA AUTH
+app.use("/api/usuarios", usuariosRoutes) // <--- NUEVA RUTA PARA USUARIOS
+app.use("/api/movimientos", movimientosRoutes) // <--- NUEVA RUTA PARA MOVIMIENTOS
 
 // Ruta de prueba
 app.get("/", (req, res) => {
@@ -42,6 +50,9 @@ app.get("/", (req, res) => {
       ventas: "/api/ventas",
       whatsapp: "/api/whatsapp",
       settings: "/api/settings", // <--- NUEVO ENDPOINT
+      auth: "/api/auth", // <--- NUEVO ENDPOINT PARA AUTH
+      usuarios: "/api/usuarios", // <--- NUEVO ENDPOINT PARA USUARIOS
+      movimientos: "/api/movimientos", // <--- NUEVO ENDPOINT PARA MOVIMIENTOS
     },
   })
 })
@@ -59,15 +70,23 @@ app.get("/api/status", (req, res) => {
 // Inicializar servidor
 async function startServer() {
   try {
-    // Conectar a la base de datos
+    // Conectar a MongoDB con cliente nativo
     await connectToDatabase()
-    console.log("✅ Conectado a MongoDB")
+    console.log("✅ Conectado a MongoDB (cliente nativo)")
+
+    // Conectar a MongoDB con Mongoose
+    const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/inventario"
+    await mongoose.connect(MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    })
+    console.log("✅ Conectado a MongoDB (Mongoose)")
 
     // Inicializar cliente de WhatsApp
     console.log("📱 Inicializando cliente de WhatsApp...")
     try {
-      await initializeWhatsAppClient()
-      console.log("✅ Cliente de WhatsApp inicializado correctamente")
+      // await initializeWhatsAppClient() // Comentado temporalmente
+      console.log("⚠️ Cliente de WhatsApp deshabilitado temporalmente")
     } catch (error) {
       console.log("⚠️ Cliente de WhatsApp no pudo inicializarse:", error.message)
       console.log("💡 El servidor funcionará, pero WhatsApp no estará disponible")

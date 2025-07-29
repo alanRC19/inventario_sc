@@ -1,4 +1,5 @@
 const { MongoClient } = require("mongodb")
+require("dotenv").config()
 
 let db = null
 let client = null
@@ -12,12 +13,16 @@ async function connectToDatabase() {
       return db
     }
 
-    console.log("🔄 Conectando a MongoDB...")
-    client = new MongoClient(MONGODB_URI)
+    console.log("🔄 Conectando a MongoDB Atlas...")
+    client = new MongoClient(MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      retryWrites: true,
+      w: "majority"
+    })
     await client.connect()
 
-    // Extraer el nombre de la base de datos de la URI o usar 'inventario' por defecto
-    const dbName = MONGODB_URI.split("/").pop().split("?")[0] || "inventario"
+    const dbName = "inventario"
     db = client.db(dbName)
 
     console.log(`✅ Conectado a MongoDB - Base de datos: ${dbName}`)

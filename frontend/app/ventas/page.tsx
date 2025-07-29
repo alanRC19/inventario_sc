@@ -41,6 +41,11 @@ export default function VentasPage() {
   const [cantidad, setCantidad] = useState("")
   const modalRef = useRef<HTMLDivElement>(null)
 
+  // Funciones para validar progreso del formulario
+  const isStep1Complete = () => cliente.trim() !== ""
+  const isStep2Complete = () => productosSeleccionados.length > 0
+  const isStep3Complete = () => Boolean(metodoPago)
+
   // Estados para edición
   const [editId, setEditId] = useState<string | null>(null)
   const [editCliente, setEditCliente] = useState("")
@@ -99,7 +104,7 @@ export default function VentasPage() {
       articuloId: articulo._id,
       nombre: articulo.nombre,
       cantidad: cantidadNum,
-      precioUnitario: articulo.precioUnitario || 0,
+      precioVenta: articulo.precioUnitario || 0,
       subtotal: (articulo.precioUnitario || 0) * cantidadNum,
     }
 
@@ -161,6 +166,46 @@ export default function VentasPage() {
     fetchVentasData()
   }
 
+  const cancelarVenta = async (id: string, cliente: string, total: number) => {
+    const motivo = prompt(
+      `⚠️ CANCELAR VENTA\n\n` +
+      `Cliente: ${cliente}\n` +
+      `Total: $${total.toFixed(2)}\n\n` +
+      `Esta acción devolverá el stock de todos los productos al inventario.\n\n` +
+      `Ingresa el motivo de la cancelación (opcional):`,
+      "Cancelación administrativa"
+    )
+    
+    if (motivo === null) return // Usuario canceló
+    
+    try {
+      const response = await fetch(`http://localhost:3001/api/ventas/${id}/cancelar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ motivo })
+      })
+      
+      const resultado = await response.json()
+      
+      if (resultado.success) {
+        alert(
+          `✅ VENTA CANCELADA EXITOSAMENTE\n\n` +
+          `💰 Monto a devolver: $${resultado.montoDevuelto.toFixed(2)} (${resultado.metodoPago})\n` +
+          `📦 Stock devuelto:\n${resultado.productosDevueltos.map(p => `  • ${p.cantidad}x ${p.nombre}`).join('\n')}\n\n` +
+          `${resultado.mensaje}`
+        )
+        fetchVentasData()
+      } else {
+        alert(`❌ Error: ${resultado.error}`)
+      }
+    } catch (error) {
+      console.error('Error al cancelar venta:', error)
+      alert('❌ Error al cancelar la venta')
+    }
+  }
+
   const iniciarEdicion = (venta: Venta) => {
     setEditId(venta._id)
     setEditCliente(venta.cliente)
@@ -190,7 +235,7 @@ export default function VentasPage() {
       articuloId: articulo._id,
       nombre: articulo.nombre,
       cantidad: cantidadNum,
-      precioUnitario: articulo.precioUnitario || 0,
+      precioVenta: articulo.precioUnitario || 0,
       subtotal: (articulo.precioUnitario || 0) * cantidadNum,
     }
 
@@ -395,21 +440,25 @@ export default function VentasPage() {
             </td>
             <td className="p-4 flex gap-2">
               <button
-                className="p-1 rounded hover:bg-[#f3f4f6] text-green-600"
+                className="p-2 rounded-lg hover:bg-green-50 text-green-600 transition-colors"
                 title="Enviar por WhatsApp"
                 onClick={() => abrirModalWhatsApp(venta._id, venta.telefono)}
               >
-                <span className="material-icons text-base">sms</span>
+                <span className="material-icons text-base">whatsapp</span>
               </button>
-              <button className="p-1 rounded hover:bg-[#f3f4f6]" title="Editar" onClick={() => iniciarEdicion(venta)}>
+              <button 
+                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors" 
+                title="Editar venta" 
+                onClick={() => iniciarEdicion(venta)}
+              >
                 <span className="material-icons text-base">edit</span>
               </button>
               <button
-                className="p-1 rounded hover:bg-[#f3f4f6] text-red-600"
-                title="Eliminar"
-                onClick={() => eliminarVenta(venta._id)}
+                className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                title="Cancelar venta y devolver stock"
+                onClick={() => cancelarVenta(venta._id, venta.cliente, venta.total)}
               >
-                <span className="material-icons text-base">delete</span>
+                <span className="material-icons text-base">cancel</span>
               </button>
             </td>
           </tr>
@@ -439,137 +488,168 @@ export default function VentasPage() {
         </button>
       </div>
 
-      {/* modal o frame de nueva venta */}
-      <Modal open={showModal} onClose={() => setShowModal(false)} title="Nueva Venta">
-        <div className="space-y-4">
-          {/* Cliente */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
-            <input
-              className="border border-[#ececec] p-2 rounded-lg w-full text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
-              placeholder="Nombre del cliente"
-              value={cliente}
-              onChange={(e) => setCliente(e.target.value)}
-              autoFocus
-            />
+      {/* Modal de nueva venta simple con guinda */}
+      <Modal 
+        open={showModal} 
+        onClose={() => setShowModal(false)} 
+        title=""
+        maxWidth="30rem"
+      >
+        <div className="bg-white">
+          {/* Header con progreso */}
+          <div className="bg-white border-b border-gray-200 p-4 text-center">
+            <h2 className="text-lg font-semibold text-gray-800 mb-3">Nueva Venta</h2>
+            
+            {/* Progreso simple */}
+            <div className="flex justify-center items-center gap-3">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                isStep1Complete() ? 'bg-red-800 text-white' : 'bg-gray-300 text-gray-600'
+              }`}>
+                <span className="material-icons text-xs">person</span>
+              </div>
+              <div className="w-4 h-px bg-gray-300"></div>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                isStep2Complete() ? 'bg-red-800 text-white' : 'bg-gray-300 text-gray-600'
+              }`}>
+                <span className="material-icons text-xs">shopping_cart</span>
+              </div>
+              <div className="w-4 h-px bg-gray-300"></div>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                isStep3Complete() ? 'bg-red-800 text-white' : 'bg-gray-300 text-gray-600'
+              }`}>
+                <span className="material-icons text-xs">payment</span>
+              </div>
+            </div>
           </div>
 
-          {/* Teléfono y WhatsApp */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Formulario */}
+          <div className="p-4 space-y-4">
+            
+            {/* Cliente */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
               <input
-                className="border border-[#ececec] p-2 rounded-lg w-full text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="Número de teléfono"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-black bg-white focus:outline-none focus:border-red-800"
+                placeholder="Nombre del cliente *"
+                value={cliente}
+                onChange={(e) => setCliente(e.target.value)}
+                autoFocus
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <input
+                className="flex-1 px-3 py-2 border border-gray-300 rounded text-black bg-white focus:outline-none focus:border-red-800"
+                placeholder="Teléfono"
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
               />
-            </div>
-            <div className="flex items-end">
-              <label className="flex items-center gap-2 cursor-pointer">
+              
+              <label className="flex items-center gap-1 px-3 py-2 border border-gray-300 rounded cursor-pointer hover:bg-gray-50">
                 <input
                   type="checkbox"
                   checked={enviarWhatsApp}
                   onChange={(e) => setEnviarWhatsApp(e.target.checked)}
-                  className="rounded"
+                  className="w-4 h-4"
                 />
-                <span className="text-sm text-gray-700">📱 Enviar ticket por WhatsApp</span>
+                <span className="material-icons text-green-600 text-sm">whatsapp</span>
               </label>
             </div>
-          </div>
 
-          {/* seleccion de productos */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Agregar Producto</label>
-            <div className="flex gap-2">
-              <select
-                className="border border-[#ececec] p-2 rounded-lg flex-1 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
-                value={articuloSeleccionado}
-                onChange={(e) => setArticuloSeleccionado(e.target.value)}
-              >
-                <option value="">Selecciona un producto</option>
-                {articulosDisponibles.map((art) => (
-                  <option key={art._id} value={art._id}>
-                    {art.nombre} - Stock: {art.stock} - ${art.precioUnitario?.toFixed(2)}
-                  </option>
-                ))}
-              </select>
-              <input
-                className="border border-[#ececec] p-2 rounded-lg w-20 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="Cant."
-                type="number"
-                min="1"
-                value={cantidad}
-                onChange={(e) => setCantidad(e.target.value)}
-              />
-              <button
-                onClick={agregarProducto}
-                disabled={!articuloSeleccionado || !cantidad}
-                className="bg-black text-white px-3 py-2 rounded-lg hover:bg-gray-900 transition disabled:opacity-50"
-              >
-                <span className="material-icons text-sm">add</span>
-              </button>
+            {/* Productos */}
+            <div className="border-t border-gray-200 pt-4">
+              <div className="flex gap-2 mb-3">
+                <select
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded text-black bg-white focus:outline-none focus:border-red-800"
+                  value={articuloSeleccionado}
+                  onChange={(e) => setArticuloSeleccionado(e.target.value)}
+                  title="Seleccionar producto"
+                >
+                  <option value="">Seleccionar producto</option>
+                  {articulosDisponibles.map((art) => (
+                    <option key={art._id} value={art._id}>
+                      {art.nombre} - ${art.precioUnitario?.toFixed(2)}
+                    </option>
+                  ))}
+                </select>
+                
+                <input
+                  className="w-16 px-3 py-2 border border-gray-300 rounded text-black bg-white focus:outline-none focus:border-red-800 text-center"
+                  placeholder="Cant"
+                  type="number"
+                  min="1"
+                  value={cantidad}
+                  onChange={(e) => setCantidad(e.target.value)}
+                />
+                
+                <button
+                  onClick={agregarProducto}
+                  disabled={!articuloSeleccionado || !cantidad}
+                  className="px-3 py-2 bg-red-800 text-white rounded hover:bg-red-900 transition-colors disabled:opacity-50"
+                >
+                  <span className="material-icons text-sm">add</span>
+                </button>
+              </div>
+
+              {/* Lista de productos */}
+              {productosSeleccionados.length > 0 && (
+                <div className="border border-gray-200 rounded max-h-32 overflow-y-auto">
+                  {productosSeleccionados.map((producto, index) => (
+                    <div key={index} className="px-3 py-2 border-b border-gray-100 last:border-b-0 flex justify-between items-center">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">{producto.nombre}</div>
+                        <div className="text-xs text-gray-600">{producto.cantidad} × ${producto.precioVenta.toFixed(2)}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-red-800">${producto.subtotal.toFixed(2)}</span>
+                        <button onClick={() => removerProducto(index)} className="p-1 text-gray-400 hover:text-red-600 rounded">
+                          <span className="material-icons text-sm">close</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
 
-          {/* lista de productos seleccionados */}
-          {productosSeleccionados.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Productos Seleccionados</label>
-              <div className="border border-[#ececec] rounded-lg p-2 max-h-32 overflow-y-auto">
-                {productosSeleccionados.map((producto, index) => (
-                  <div key={index} className="flex justify-between items-center py-1">
-                    <span className="text-sm">
-                      {producto.cantidad}x {producto.nombre} - ${producto.subtotal.toFixed(2)}
-                    </span>
-                    <button onClick={() => removerProducto(index)} className="text-red-600 hover:text-red-800">
-                      <span className="material-icons text-sm">remove</span>
-                    </button>
+            {/* Pago */}
+            <div className="border-t border-gray-200 pt-4">
+              <div className="flex gap-3">
+                <select
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded text-black bg-white focus:outline-none focus:border-red-800"
+                  value={metodoPago}
+                  onChange={(e) => setMetodoPago(e.target.value as "efectivo" | "tarjeta" | "transferencia")}
+                  title="Seleccionar método de pago"
+                >
+                  <option value="efectivo">Efectivo</option>
+                  <option value="tarjeta">Tarjeta</option>
+                  <option value="transferencia">Transferencia</option>
+                </select>
+                
+                {productosSeleccionados.length > 0 && (
+                  <div className="bg-red-800 text-white px-4 py-2 rounded text-center">
+                    <div className="text-xs opacity-90">Total</div>
+                    <div className="text-lg font-bold">${calcularTotal().toFixed(2)}</div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
-          )}
-
-          {/* tipo de pago */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
-            <select
-              className="border border-[#ececec] p-2 rounded-lg w-full text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
-              value={metodoPago}
-              onChange={(e) => setMetodoPago(e.target.value as any)}
-            >
-              <option value="efectivo">Efectivo</option>
-              <option value="tarjeta">Tarjeta</option>
-              <option value="transferencia">Transferencia</option>
-            </select>
           </div>
 
-          {/* total */}
-          {productosSeleccionados.length > 0 && (
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center text-lg font-semibold">
-                <span>Total:</span>
-                <span>${calcularTotal().toFixed(2)}</span>
-              </div>
-            </div>
-          )}
-
-          {/* botones */}
-          <div className="flex justify-end gap-2 mt-4">
+          {/* Botones */}
+          <div className="border-t border-gray-200 p-4 flex justify-end gap-3">
             <button
-              className="bg-gray-200 text-black px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+              className="px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded hover:bg-gray-50"
               onClick={() => setShowModal(false)}
             >
               Cancelar
             </button>
+            
             <button
-              className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition flex items-center gap-2"
+              className="px-5 py-2 bg-red-800 text-white rounded hover:bg-red-900 disabled:opacity-50"
               onClick={crearVenta}
               disabled={!cliente || productosSeleccionados.length === 0}
             >
-              {enviarWhatsApp && <span className="material-icons text-sm">whatsapp</span>}
-              Crear Venta
+              {enviarWhatsApp ? 'Crear y Enviar' : 'Crear Venta'}
             </button>
           </div>
         </div>
@@ -655,6 +735,7 @@ export default function VentasPage() {
                 className="border border-[#ececec] p-2 rounded-lg flex-1 text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
                 value={articuloSeleccionado}
                 onChange={(e) => setArticuloSeleccionado(e.target.value)}
+                title="Seleccionar producto para editar"
               >
                 <option value="">Selecciona un producto</option>
                 {articulosDisponibles.map((art) => (
@@ -706,7 +787,8 @@ export default function VentasPage() {
             <select
               className="border border-[#ececec] p-2 rounded-lg w-full text-black bg-white focus:outline-none focus:ring-2 focus:ring-black"
               value={editMetodoPago}
-              onChange={(e) => setEditMetodoPago(e.target.value as any)}
+              onChange={(e) => setEditMetodoPago(e.target.value as "efectivo" | "tarjeta" | "transferencia")}
+              title="Seleccionar método de pago"
             >
               <option value="efectivo">Efectivo</option>
               <option value="tarjeta">Tarjeta</option>

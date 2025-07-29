@@ -4,10 +4,13 @@ import type React from "react"
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
+import { usePathname } from "next/navigation"
 import { Inter } from "next/font/google" // <--- ASEGÚRATE DE QUE ESTA LÍNEA ESTÉ ASÍ
 import "./globals.css"
 import { HamburgerIcon } from "@/shared/components/HamburgerIcon" // Asegúrate de que esta ruta sea correcta
-import { Settings as SettingsIcon } from "@mui/icons-material" // Importa el icono de configuración de Material UI
+import { AuthProvider } from "@/shared/contexts/AuthContext"
+import AuthSection from "@/shared/components/AuthSection"
+// Icono de configuración usando símbolo simple
 
 // Definimos la fuente Inter
 const inter = Inter({
@@ -34,8 +37,12 @@ export default function ClientLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [mobileSidebar, setMobileSidebar] = useState(false)
+  const pathname = usePathname()
+  
+  // Verificar si estamos en la página de login
+  const isLoginPage = pathname === '/login'
 
   // Forzar resize tras la animación del sidebar
   useEffect(() => {
@@ -46,15 +53,18 @@ export default function ClientLayout({
   }, [sidebarOpen])
 
   return (
-    <html lang="es">
-      <head>
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-      </head>
-      {/* Usamos la variable de la fuente Inter */}
-      <body className={`${inter.variable} antialiased bg-[#fafafa] text-black`}>
-        {" "}
-        {/* <--- ASEGÚRATE DE QUE ESTA LÍNEA ESTÉ ASÍ */}
-        <div className="flex">
+    <AuthProvider>
+      <html lang="es">
+        <head>
+          <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+        </head>
+        {/* Usamos la variable de la fuente Inter */}
+        <body className={`${inter.variable} antialiased bg-[#fafafa] text-black`}>
+          {/* Si es página de login, solo renderizar el contenido */}
+          {isLoginPage ? (
+            children
+          ) : (
+            <div className="flex">
           {/* Sidebar */}
           <aside
             className={`
@@ -140,8 +150,8 @@ export default function ClientLayout({
                 className={`flex items-center ${sidebarOpen ? "gap-3 px-3" : "justify-center"} py-2 rounded-lg hover:bg-[#f3f4f6] transition text-base font-medium text-black`}
               >
                 <span className="text-black">
-                  <SettingsIcon className={`w-6 h-6 ${sidebarOpen ? "text-lg" : "text-base"}`} />{" "}
-                  {/* Icono de Lucide React */}
+                  <span className={`inline-block w-6 h-6 ${sidebarOpen ? "text-lg" : "text-base"}`}>⚙️</span>
+                  {/* Icono de engranaje simple */}
                 </span>
                 {sidebarOpen && "Configuración"}
               </Link>
@@ -184,7 +194,7 @@ export default function ClientLayout({
                     className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#f3f4f6] transition text-base font-medium text-black"
                     onClick={() => setMobileSidebar(false)}
                   >
-                    <SettingsIcon className="w-6 h-6 text-lg" />
+                    <span className="inline-block w-6 h-6 text-lg">⚙️</span>
                     Configuración
                   </Link>
                 </div>
@@ -200,7 +210,7 @@ export default function ClientLayout({
           >
             {/* Topbar */}
             <header
-              className="h-16 bg-white shadow-sm flex items-center px-4 md:px-8 border-b border-[#ececec] fixed w-full left-0 z-40"
+              className="h-16 bg-white shadow-sm flex items-center px-4 md:px-8 border-b border-[#ececec] fixed w-full left-0 z-40 relative"
               style={{ marginLeft: sidebarOpen ? 240 : 64, transition: "margin-left 0.2s" }}
             >
               {/*boton menu */}
@@ -215,10 +225,14 @@ export default function ClientLayout({
                 alt="Abrir/cerrar menú"
                 className="w-8 h-8 rounded-full object-cover mr-4 hidden md:block"
               />
-              <span className="text-2xl font-bold tracking-tight text-black">
-                Parroquia del Sagrado Corazón de Jesús
+              <span className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-black truncate flex-1 min-w-0 mr-12">
+                <span className="hidden lg:inline">Parroquia del Sagrado Corazón de Jesús</span>
+                <span className="hidden md:inline lg:hidden">Parroquia Sgdo. Corazón</span>
+                <span className="md:hidden">Parroquia</span>
               </span>
-              <div className="flex-1" />
+              <div className="ml-auto pr-12">
+                <AuthSection />
+              </div>
             </header>
 
             {/*main content */}
@@ -226,8 +240,10 @@ export default function ClientLayout({
               {children}
             </main>
           </div>
-        </div>
-      </body>
-    </html>
+            </div>
+          )}
+        </body>
+      </html>
+    </AuthProvider>
   )
 }
